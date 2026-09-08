@@ -1,0 +1,42 @@
+{
+  "name": "ddalkkak-threads-factory",
+  "version": "1.11.7",
+  "description": "딸칵 Threads 공장 v1 - 개인용 콘텐츠 제작 및 예약 발행 로컬 웹앱",
+  "private": true,
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "dev": "ts-node src/server.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.2",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "multer": "^2.2.0",
+    "node-cron": "^3.0.3",
+    "rss-parser": "^3.13.0",
+    "sharp": "0.35.3",
+    "yazl": "3.3.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/express": "^4.17.21",
+    "@types/multer": "^2.2.0",
+    "@types/node": "^20.14.0",
+    "@types/node-cron": "^3.0.11",
+    "@types/yazl": "3.3.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "homepage": "https://pulse-audio.co.kr/",
+  "author": {
+    "name": "Pulse Factory",
+    "url": "https://pulse-audio.co.kr/"
+  },
+  "license": "AGPL-3.0"
+}

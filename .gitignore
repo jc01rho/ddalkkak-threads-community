@@ -1,0 +1,51 @@
+# 절대 Git에 올리면 안 되는 것들
+.env
+data/app.db
+data/app.db-journal
+data/app.db-wal
+data/app.db-shm
+data/*.local.json
+data/uploads/
+data/test-uploads/
+data/test-license-cache/
+data/test-license-cache-empty/
+data/test-license-cache-log-safety/
+data/test-license-cache-docsmode/
+data/test-license-cache-nodeenv/
+data/test-license-cache-launch/
+data/test-license-cache-bookmarks/
+logs/
+node_modules/
+dist/
+dist-docs-tools/
+*.log
+
+# 문서 제작 도구 산출물 (재생성 가능 - 소스는 docs/manuals, docs/manifests, docs/templates, docs/tools)
+docs/seed-data/
+docs/assets/raw/
+docs/assets/annotated/
+docs/output/
+
+# 테스트 실행 시 생성되는 격리 산출물 (scripts/test-runner.js가 매 실행마다 새로 만듦)
+data/test-app.db
+data/test-app.db-wal
+data/test-app.db-shm
+data/test-logs/
+data/test-extension-folder*
+data/qa-clear-*.db
+data/qa-clear-*.db-wal
+data/qa-clear-*.db-shm
+
+# Windows 배포 빌드 산출물 (스크립트로 재생성 가능 - release\windows-staging, release\installer)
+release/
+
+# ProductRadarBrowser.exe 컴파일 산출물 (scripts/build-product-radar-browser.js가 재생성 -
+# launcher\ProductRadarBrowser\lib\의 참조 DLL과는 별개, lib\은 소스로 커밋됨)
+launcher/ProductRadarBrowser/bin/
+
+# 개발 중 생성된 전체 프로젝트 백업본(실제 .env 등 민감 파일 포함) - Git에 올리면 안 됨
+딸칵_Threads_공장_BACKUP_*/
+*_BACKUP_*/
+
+# 정체불명의 루트 잔재 파일
+/0

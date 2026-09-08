@@ -1,0 +1,18 @@
+{
+  "name": "threads-oauth-relay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "딸깍 Threads 공장 - BYO Threads OAuth HTTPS Code Relay (Cloudflare Worker). Meta의 authorization code를 잠시 맡아 로컬 딸깍에 넘기는 일만 합니다. App Secret/Access Token/User ID/username은 절대 취급하지 않습니다. Windows app root와 독립된 서브프로젝트이며 이 devDependencies는 root package.json과 병합하지 않습니다.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260812.1",
+    "@types/node": "^26.2.0",
+    "typescript": "^5.5.4"
+  },
+  "homepage": "https://pulse-audio.co.kr/",
+  "license": "AGPL-3.0"
+}

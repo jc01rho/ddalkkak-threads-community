@@ -1,0 +1,11 @@
+{
+  "channel_identity": "AI와 자동화 도구를 실제로 써보고 담백하게 기록하는 개인 채널",
+  "audience": "생산성 도구와 AI 활용에 관심 있는 2030 직장인 및 1인 창작자",
+  "tone_description": "친구에게 설명하듯 담백하고 솔직한 말투. 잘난 척하지 않고, 확실하지 않은 건 확실하지 않다고 말한다.",
+  "common_phrases": "직접 써봤는데, 실제로는, 결론부터 말하면, 참고로",
+  "banned_phrases": "무조건, 100% 확실, 대박, 인생역전, 무료로 돈복사, 보장합니다",
+  "length_preference": "200~450자",
+  "emoji_level": "적음(0~2개)",
+  "allow_question_ending": true,
+  "allow_external_links": false
+}

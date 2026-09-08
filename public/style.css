@@ -1,0 +1,1237 @@
+/* ==================== 테마 변수 (라이트 기본값) ==================== */
+:root {
+  --topbar-height: 58px;
+  --sidebar-width: 252px;
+
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-alt: #f9fafb;
+  --border: #e5e7eb;
+  --text: #1f2328;
+  --text-muted: #6b7280;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+
+  --topbar-bg: #1f2937;
+  --topbar-text: #ffffff;
+  --topbar-chip-bg: #374151;
+
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e5e7eb;
+  --sidebar-hover: #f3f4f6;
+  --sidebar-active-bg: #dbeafe;
+  --sidebar-active-text: #1d4ed8;
+  --sidebar-active-border: #2563eb;
+
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+  --input-text: #1f2328;
+
+  --accent-blue: #2563eb;
+  --accent-blue-hover: #1d4ed8;
+  --accent-teal: #0891b2;
+  --accent-teal-hover: #0e7490;
+  --accent-purple: #7c3aed;
+  --accent-slate: #64748b;
+  --accent-coral: #e2653f;
+  --accent-rose: #d1477a;
+  --success: #16a34a;
+  --success-hover: #15803d;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --warn: #d97706;
+
+  --btn-default-bg: #374151;
+  --btn-default-text: #ffffff;
+  --btn-secondary-bg: #6b7280;
+
+  --status-draft: #6b7280;
+  --status-approved: #2563eb;
+  --status-scheduled: #7c3aed;
+  --status-publishing: #d97706;
+  --status-published: #16a34a;
+  --status-failed: #dc2626;
+  --status-rejected: #9ca3af;
+  --status-dry-run: #0891b2;
+  --status-affiliate: #db2777;
+  --status-ok: #16a34a;
+  --status-fail: #dc2626;
+  --status-dup: #d97706;
+
+  --chip-ok-bg: #14532d;
+  --chip-warn-bg: #78350f;
+  --chip-bad-bg: #7f1d1d;
+
+  --backdrop: rgba(15, 20, 30, 0.45);
+}
+
+:root[data-theme="dark"] {
+  --bg: #070a13;
+  --surface: #121828;
+  --surface-alt: #0d1220;
+  --border: #232c44;
+  --text: #e8eaf2;
+  /* 보조 텍스트가 본문(#e8eaf2)보다 지나치게 어두워 흐리게 보였다. 한 단계만 밝혀
+     surface(#121828) 대비 5.94:1 -> 8.55:1로 올린다. 본문보다는 여전히 어두워
+     위계가 유지되고, 흰색 도배가 아니라 눈부심도 없다. 라이트 토큰은 그대로다. */
+  --text-muted: #aab4d0;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+
+  --topbar-bg: #0a0e1a;
+  --topbar-text: #eef1f8;
+  --topbar-chip-bg: #161d33;
+
+  --sidebar-bg: #0a0e1a;
+  --sidebar-border: #1c2438;
+  --sidebar-hover: #151c30;
+  --sidebar-active-bg: #182142;
+  --sidebar-active-text: #9db4ff;
+  --sidebar-active-border: #5b8cff;
+
+  --input-bg: #101627;
+  --input-border: #2a3350;
+  --input-text: #e8eaf2;
+
+  --accent-blue: #4c7dff;
+  --accent-blue-hover: #6d95ff;
+  --accent-teal: #22d3ee;
+  --accent-teal-hover: #67e3f4;
+  --accent-purple: #a78bfa;
+  --accent-slate: #94a3b8;
+  --accent-coral: #ff8a68;
+  --accent-rose: #f0769c;
+  --success: #34d399;
+  --success-hover: #5fe0b3;
+  --danger: #f87171;
+  --danger-hover: #fb9a9a;
+  --warn: #fbbf24;
+
+  --btn-default-bg: #1c2438;
+  --btn-default-text: #e8eaf2;
+  --btn-secondary-bg: #2a3350;
+
+  --status-draft: #7c88a8;
+  --status-approved: #4c7dff;
+  --status-scheduled: #a78bfa;
+  --status-publishing: #fbbf24;
+  --status-published: #34d399;
+  --status-failed: #f87171;
+  --status-rejected: #6b7590;
+  --status-dry-run: #22d3ee;
+  --status-affiliate: #ec4899;
+  --status-ok: #34d399;
+  --status-fail: #f87171;
+  --status-dup: #fbbf24;
+
+  --chip-ok-bg: #0f3324;
+  --chip-warn-bg: #3d2a0a;
+  --chip-bad-bg: #3d1414;
+
+  --backdrop: rgba(2, 4, 10, 0.6);
+}
+
+/* ==================== 기본 레이아웃 ==================== */
+* { box-sizing: border-box; }
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden; /* 페이지 전체 스크롤 대신 .main-content만 스크롤합니다 */
+}
+body {
+  font-family: -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  /* 한국어 문구가 음절 단위로 비정상적으로 줄바꿈되지 않게 합니다(URL 등 긴 토큰은
+     overflow-wrap이 필요할 때만 끊어줌). */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+#app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#statusBar {
+  flex: 0 0 auto;
+  background: var(--topbar-bg);
+  color: var(--topbar-text);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 18px;
+  background: none;
+  border: none;
+  color: inherit;
+  font-family: inherit;
+  padding: 4px 2px;
+  margin: -4px -2px;
+  cursor: pointer;
+  border-radius: 4px;
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+}
+.brand:hover, .brand:focus-visible { background: rgba(255, 255, 255, 0.12); }
+.brand:focus-visible { outline: 2px solid var(--accent-blue-hover); outline-offset: 1px; }
+.brand .ver { font-weight: 400; opacity: 0.7; font-size: 13px; }
+.brand-icon-wrap {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+  display: inline-block;
+}
+.brand-icon { width: 100%; height: 100%; display: block; object-fit: cover; transform: scale(1.12); }
+.status-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  background: var(--topbar-chip-bg);
+  color: var(--topbar-text);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+.chip.ok { background: var(--chip-ok-bg); }
+.chip.warn { background: var(--chip-warn-bg); }
+.chip.bad { background: var(--chip-bad-bg); }
+
+/* ==================== 앱 셸 (사이드바 + 본문) ==================== */
+.app-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  position: relative;
+}
+
+.sidebar {
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  padding: 14px 10px;
+  gap: 14px;
+  /* 사이드바 스크롤바 핫픽스: 스크롤 기능은 유지하되 평소엔 거의 보이지 않고,
+     사이드바에 마우스를 올렸을 때만 얇은 회색 thumb이 은은하게 보인다.
+     .main-content 등 다른 스크롤 영역에는 영향을 주지 않도록 .sidebar에만 적용한다. */
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: transparent transparent;
+}
+.sidebar:hover {
+  scrollbar-color: rgba(128, 128, 128, 0.45) transparent; /* Firefox: hover 시에만 thumb 표시 */
+}
+.sidebar::-webkit-scrollbar { width: 6px; } /* Chromium/WebKit */
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+.sidebar:hover::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.45);
+}
+.sidebar-top { display: flex; flex-direction: column; gap: 10px; padding: 0 4px; }
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  padding: 6px 6px;
+  border-radius: 6px;
+}
+.sidebar-brand:hover, .sidebar-brand:focus-visible { background: var(--sidebar-hover); }
+.sidebar-brand:focus-visible { outline: 2px solid var(--accent-blue); outline-offset: 1px; }
+.sidebar-brand-icon-wrap {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+  display: inline-block;
+}
+.sidebar-brand-icon { width: 100%; height: 100%; display: block; object-fit: cover; transform: scale(1.12); }
+
+/* ---------------- 핵심 진입 카드 2개(상품 레이더 / 스마트 에디터) ----------------
+   같은 크기·형태·아이콘 영역을 공유하는 shared contract가 .sidebar-hero-card이고,
+   색상 identity만 각 *-productradar / *-smarteditor 수정자가 다르게 줍니다. 52~56px
+   높이대를 min-height로 고정해 두 카드가 항상 같은 tier로 보이게 합니다. */
+.sidebar-hero-group { display: flex; flex-direction: column; gap: 7px; padding: 0 4px; }
+.sidebar-hero-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 54px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  color: #ffffff;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.sidebar-hero-card .nav-icon { display: inline-flex; flex: 0 0 auto; opacity: 1; }
+.sidebar-hero-card:hover { filter: brightness(1.08); }
+.sidebar-hero-card:focus-visible { outline: 2px solid var(--accent-blue-hover); outline-offset: 2px; }
+
+.sidebar-hero-productradar { background: linear-gradient(135deg, var(--accent-coral), var(--accent-rose)); }
+.sidebar-hero-smarteditor { background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); }
+
+/* ---------------- P1 생산라인(자료 수집→보관함→초안함→예약) ---------------- */
+/* 같은 그룹의 연속 메뉴 사이에 얇은 세로 연결선을 그려 "위에서 아래로 흐르는" 한 작업
+   흐름임을 보여준다(과도한 장식/숫자 마법사 없음). */
+.sidebar-menu-group.pipeline-line .nav-item { position: relative; }
+.sidebar-menu-group.pipeline-line .nav-item + .nav-item::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  top: -6px;
+  width: 2px;
+  height: 6px;
+  background: rgba(128, 128, 128, 0.45);
+}
+
+/* P1.4: 사이드바 점등 안내 스타일은 제거됐다. 사이드바는 메뉴 목록 + 현재 화면 active만
+   담당하고, 다음 길 안내는 화면 내 CTA(.next-cta)가 한다. */
+/* P1.1: 다음 공정 CTA - 회색 보조 버튼과 구분되는 blue outline. 수집 결과 행에서는
+   오른쪽 끝 정렬(다음 공정으로 넘어가는 방향성). 좁은 화면에서는 자연스럽게 wrap. */
+.next-cta {
+  border: 1px solid var(--accent-blue);
+  color: var(--accent-blue);
+  background: transparent;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.next-cta:hover { background: rgba(74, 144, 217, 0.12); }
+.collect-actions-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+#collectStatusText { display: inline-flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+#collectStatusText .next-cta { margin-left: auto; }
+
+/* ---------------- P1.3: v1.1 시작/메인 화면 ---------------- */
+/* hero placeholder: 최종 일러스트 1장 교체 전까지 CSS 그라디언트 + 공장 흐름 텍스트.
+   1366×768에서 히어로+카피+카드 4개가 첫 화면에 들어오도록 높이를 절제한다. */
+.home-hero {
+  border-radius: 12px;
+  padding: 28px 20px;
+  margin-bottom: 16px;
+  background: linear-gradient(120deg, var(--accent-blue), var(--accent-purple) 55%, var(--accent-coral));
+  color: #fff;
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.home-hero img { max-width: 100%; max-height: 180px; display: block; margin: 0 auto; }
+.home-hero-flow { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; font-size: 14px; }
+.home-hero-node { padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.16); }
+.home-hero-factory { background: rgba(255, 255, 255, 0.3); font-weight: 700; }
+.home-hero-arrow { opacity: 0.8; }
+
+/* 다크모드 전용 홈 히어로 대비 보정.
+   다크 팔레트는 accent가 오히려 더 밝아(#4c7dff/#a78bfa/#ff8a68) 그 위의 흰 글씨가
+   흐려 보인다. 게다가 칩 배경이 흰색 반투명이라 글자 뒤를 더 밝게 만들어 대비를 깎고
+   있었다. 글자 크기/패딩/모양은 그대로 두고 칩 배경만 어둡게 깔아 흰 글씨가 또렷해지게
+   한다. 화살표는 opacity로 흐려져 있던 것을 명시적 색상값으로 바꾼다. */
+:root[data-theme="dark"] .home-hero-node { background: rgba(9, 13, 24, 0.30); }
+:root[data-theme="dark"] .home-hero-factory { background: rgba(9, 13, 24, 0.46); }
+:root[data-theme="dark"] .home-hero-arrow { opacity: 1; color: #dfe6ff; }
+
+.home-start-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+@media (max-width: 760px) {
+  .home-start-grid { grid-template-columns: 1fr; }
+}
+.home-start-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+  padding: 16px;
+  border: 1px solid rgba(128, 128, 128, 0.35);
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.home-start-card:hover { border-color: var(--accent-blue); }
+.home-start-card strong { font-size: 15px; }
+
+/* P1.3: 초안함 filter chip - select 카드 대신 compact chip row(좁은 화면 wrap) */
+.draft-filter-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.draft-filter-chip {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(128, 128, 128, 0.4);
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.draft-filter-chip.chip-active {
+  border-color: var(--accent-blue);
+  background: var(--accent-blue);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* P1.1: 사이드바 최하단 화면 초기화 - 일반 메뉴보다 조용한 보조 utility(설정보다 강조 금지) */
+.sidebar-utility-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  opacity: 0.6;
+}
+.sidebar-utility-btn:hover { opacity: 1; }
+
+
+/* ---------------- 일반 메뉴: 얇은 카드(thin card) ----------------
+   전 항목이 같은 중립 배경(var(--sidebar-bg))을 쓰고, 카테고리별 --nav-accent만
+   왼쪽 강조선·아이콘 색으로 은은하게 반영합니다("컬러 메뉴판"처럼 보이지 않도록
+   배경 자체는 rainbow화하지 않음). active 상태는 기존 .nav-item.active 규칙(배경·
+   글자색·굵기·테두리 4가지 동시 변경)을 그대로 재사용하고, 이 규칙보다 selector
+   특이도가 낮아 자동으로 active가 우선합니다. */
+.sidebar-menu { display: flex; flex-direction: column; gap: 16px; }
+.sidebar-menu-group { display: flex; flex-direction: column; gap: 5px; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.nav-item .nav-icon { display: inline-flex; flex: 0 0 auto; opacity: 0.85; }
+.nav-item:hover { background: var(--sidebar-hover); }
+.nav-item.active {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
+  font-weight: 600;
+  border-color: var(--sidebar-active-border);
+}
+.nav-item:focus-visible { outline: 2px solid var(--accent-blue); outline-offset: 1px; }
+
+.nav-thin {
+  min-height: 38px;
+  /* 다크 모드에서 sidebar 배경(--sidebar-bg)보다 살짝 밝은 --surface를 씁니다(요청서 10절) -
+     라이트 모드에서는 둘 다 흰색이라 기존과 동일하게 테두리만으로 카드 경계를 표시합니다. */
+  background: var(--surface);
+  border: 1px solid var(--sidebar-border);
+  border-left: 3px solid var(--nav-accent, var(--sidebar-border));
+  padding-left: 9px;
+}
+.nav-thin:not(.active) .nav-icon { color: var(--nav-accent, var(--text-muted)); }
+
+.nav-color-dashboard { --nav-accent: var(--accent-slate); }
+.nav-color-collect { --nav-accent: var(--accent-teal); }
+.nav-color-materials { --nav-accent: var(--accent-purple); }
+.nav-color-drafts { --nav-accent: var(--warn); }
+.nav-color-schedule { --nav-accent: var(--success); }
+.nav-color-settings { --nav-accent: var(--text-muted); }
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  top: var(--topbar-height);
+  background: var(--backdrop);
+  z-index: 40;
+}
+.sidebar-backdrop.show { display: block; }
+
+.hamburger-btn {
+  display: none;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 60;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+.hamburger-icon, .hamburger-icon::before, .hamburger-icon::after {
+  content: "";
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+}
+.hamburger-icon { position: relative; }
+.hamburger-icon::before { position: absolute; top: -6px; left: 0; }
+.hamburger-icon::after { position: absolute; top: 6px; left: 0; }
+.hamburger-btn:focus-visible { outline: 2px solid var(--accent-blue); outline-offset: 2px; }
+
+.main-content {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px;
+}
+.view { display: none; }
+.view.active { display: block; }
+
+h2, h3, h4 { color: var(--text); }
+h2 { margin-top: 0; }
+
+/* ==================== 공통 카드/폼 ==================== */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+.form-row { display: flex; gap: 8px; }
+.form-row input { flex: 1; }
+.form-col { display: flex; flex-direction: column; gap: 10px; }
+.form-col label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text-muted); }
+
+input, textarea, select {
+  padding: 8px 10px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  background: var(--input-bg);
+  color: var(--input-text);
+}
+input[type="checkbox"], input[type="radio"] {
+  accent-color: var(--accent-blue);
+  width: 15px;
+  height: 15px;
+}
+input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 0.8; }
+textarea { min-height: 60px; resize: vertical; width: 100%; }
+
+/* 경제적 이해관계 표시 문구만 예외로 넉넉하게 연다.
+   기본 고지문부터 이미 두 줄이고 최대 500자까지 직접 고칠 수 있는데, 전역 최소 높이(60px)로는
+   읽거나 수정할 때마다 입력칸 안에서 스크롤을 해야 했다. 높이는 app.js의
+   autosizeAffiliateDisclosure()가 내용에 맞춰 조절하고, 아래 두 값이 그 상한/하한이다
+   (JS 상수 AF_DISCLOSURE_MIN_HEIGHT / AF_DISCLOSURE_MAX_HEIGHT와 같은 값이어야 한다).
+   다른 textarea에는 적용하지 않는다. */
+#afDisclosure {
+  min-height: 120px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+input[type="text"], input[type="number"], input[type="datetime-local"], input[type="time"], input[type="file"], select {
+  width: 100%;
+}
+
+button {
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--btn-default-bg);
+  color: var(--btn-default-text);
+  cursor: pointer;
+  font-size: 13px;
+}
+button:hover { opacity: 0.9; }
+button:focus-visible { outline: 2px solid var(--accent-blue); outline-offset: 2px; }
+button.secondary { background: var(--btn-secondary-bg); color: var(--btn-default-text); }
+button.danger { background: var(--danger); color: #ffffff; }
+button.danger:hover { background: var(--danger-hover); }
+button.success { background: var(--success); color: #06210f; }
+:root[data-theme="dark"] button.success { color: #06231a; }
+
+.big-btn {
+  flex: 1;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent-blue);
+  color: #ffffff;
+  cursor: pointer;
+  width: 100%;
+}
+.big-btn:hover { background: var(--accent-blue-hover); }
+.big-btn:disabled { background: var(--btn-secondary-bg); cursor: not-allowed; opacity: 0.7; }
+.big-btn.alt { background: var(--accent-teal); }
+.big-btn.alt:hover { background: var(--accent-teal-hover); }
+.big-btn.secondary { background: var(--btn-secondary-bg); }
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--accent-blue);
+  text-decoration: underline;
+  padding: 0;
+  font-size: inherit;
+  cursor: pointer;
+}
+.link-btn:hover { color: var(--accent-blue-hover); }
+/* 상품 선택 아래의 유형/제휴 상태 배지 줄 - 기존 .status-badge 를 그대로 쓰고 여백만 준다. */
+.pp-type-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.pp-type-badges:empty { display: none; }
+/* 상품글 화면의 "현재 말투 버전 · 설정에서 변경" 한 줄 - 제목 바로 아래, 입력칸 위. */
+.product-post-tone-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: -2px 0 8px; }
+.product-post-tone-line:empty { display: none; }
+
+/* download 링크(<a class="secondary" download>)를 button.secondary와 동일하게 보이도록
+   통일합니다 - a 태그는 button {..}/button.secondary {..} 선택자에 매치되지 않아 브라우저
+   기본 파란 밑줄 링크로 보이던 결함 수정(요청서 6절). download 동작 자체는 그대로 유지합니다. */
+a.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--btn-secondary-bg);
+  color: var(--btn-default-text);
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 13px;
+}
+a.secondary:hover { opacity: 0.9; }
+
+.list { display: flex; flex-direction: column; gap: 10px; }
+.item-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+}
+.item-card .meta { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+.item-card .body-text { white-space: pre-wrap; margin: 8px 0; line-height: 1.5; }
+.item-card .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.item-card .reschedule-box { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+.item-card textarea.edit-body { width: 100%; min-height: 100px; }
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff;
+}
+.status-draft { background: var(--status-draft); }
+.status-approved { background: var(--status-approved); }
+.status-scheduled { background: var(--status-scheduled); }
+.status-publishing { background: var(--status-publishing); }
+.status-published { background: var(--status-published); }
+.status-failed { background: var(--status-failed); }
+.status-rejected { background: var(--status-rejected); }
+.status-dry_run_done { background: var(--status-dry-run); }
+
+.muted { color: var(--text-muted); font-size: 13px; }
+.kv {
+  display: grid;
+  grid-template-columns: minmax(90px, max-content) 1fr;
+  gap: 6px 12px;
+  font-size: 14px;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* ==================== 대시보드 ==================== */
+/* "빠른 작업" 카드를 제거한 뒤에도 한 행 4열로는 배치하지 않습니다(값 영역이 너무 좁아져
+   글자가 단위로 쪼개지는 문제가 있었음) - 데스크톱은 2열 x 2행 고정, 좁은 화면에서만 1열. */
+.dashboard-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.dash-card {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  min-width: 0; /* 그리드 아이템이 내용 때문에 카드 폭보다 넓어지는 것을 막아 줄바꿈이 정상 동작하게 함 */
+}
+.dash-card h4 { margin: 0 0 8px; font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+.dash-card .kv > div:nth-child(odd) { color: var(--text-muted); }
+.dash-card .kv label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap; /* 체크박스 + "켜짐/꺼짐" 문구가 세로로 쪼개지지 않게 함 */
+  white-space: nowrap;
+}
+.dash-card p.muted { word-break: keep-all; overflow-wrap: break-word; }
+/* .qa-btn: "상품 레이더"/"스마트 에디터"(사이드바 핵심 카드 2개)와 "자료 수집 화면에서
+   자료 선택하기"(스마트 에디터) 버튼들이 data-view 이동 동작의 훅으로만 이 클래스를
+   씁니다. 시각 스타일은 각각 .sidebar-hero-card / .big-btn.alt가 전담하므로, 여기서는
+   별도 색상·크기 규칙을 두지 않습니다. */
+
+/* ==================== 스마트 에디터 / 예약 관리 공용 탭 ==================== */
+.editor-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 0; }
+.editor-tab {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 6px 6px 0 0;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.editor-tab:hover { background: var(--sidebar-hover); color: var(--text); }
+.editor-tab.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); }
+.editor-panel { display: none; }
+.editor-panel.active { display: block; }
+.editor-form-max { max-width: 760px; }
+
+.choice-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 10px; }
+.choice-card { display: flex; flex-direction: column; gap: 10px; }
+.choice-card h3 { margin: 0; font-size: 15px; }
+
+/* ---------------- ① 오늘 자료 수집 화면 ---------------- */
+.mode-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.mode-tab {
+  background: var(--surface-alt); color: var(--text); border: 1px solid var(--input-border);
+  padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600;
+}
+.mode-tab:hover { background: var(--sidebar-hover); }
+.mode-tab.active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+
+.preset-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.preset-btn { background: var(--sidebar-active-bg); color: var(--sidebar-active-text); }
+.preset-btn:hover { filter: brightness(0.97); }
+
+.candidate-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; font-size: 13px; }
+/* P0.5 Threads 계정 연결 카드/폼 */
+.threads-prep-list { margin: 0 0 8px 18px; padding: 0; line-height: 1.7; }
+.input-with-toggle { display: flex; gap: 6px; align-items: center; }
+.input-with-toggle input { flex: 1; }
+.input-with-toggle button { white-space: nowrap; padding: 6px 10px; }
+.input-with-prefix { display: flex; align-items: center; gap: 4px; }
+.input-with-prefix .input-prefix { color: var(--text-muted); font-weight: 600; }
+.input-with-prefix input { flex: 1; }
+.threads-advanced { margin-top: 14px; }
+.threads-advanced > summary { cursor: pointer; color: var(--text-muted); font-size: 13px; }
+.threads-advanced[open] > summary { margin-bottom: 8px; }
+
+.candidate-toolbar select { padding: 6px 8px; width: auto; }
+.candidate-toolbar label { display: flex; align-items: center; gap: 4px; color: var(--text-muted); }
+
+.candidate-item { display: flex; gap: 10px; align-items: flex-start; }
+.candidate-item input[type="checkbox"] { margin-top: 3px; }
+.candidate-item .candidate-body { flex: 1; min-width: 0; }
+.candidate-item.candidate-disabled { opacity: 0.55; }
+
+.url-result-item { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; padding: 10px; }
+.url-result-item .url-text { word-break: break-all; font-size: 13px; }
+
+.status-badge.status-ok { background: var(--status-ok); }
+.status-badge.status-fail { background: var(--status-fail); }
+.status-badge.status-dup { background: var(--status-dup); }
+.status-badge.status-manual { background: var(--btn-secondary-bg); }
+
+#generateDisabledReason { margin-top: 6px; }
+
+/* ---------------- 쿠파스 상품 홍보 모드 ---------------- */
+.required { color: var(--danger); }
+.usage-status-group { display: flex; gap: 16px; align-items: center; margin: 4px 0 10px; font-size: 14px; flex-wrap: wrap; }
+.usage-status-group label { display: flex; align-items: center; gap: 6px; font-weight: normal; color: var(--text); }
+.status-badge.status-affiliate { background: var(--status-affiliate); }
+.affiliate-meta { border-top: 1px dashed var(--border); margin-top: 8px; padding-top: 8px; font-size: 13px; }
+.affiliate-meta .kv { grid-template-columns: 110px 1fr; }
+.affiliate-meta .media-preview { margin-bottom: 10px; }
+#afMediaPreviewBox { margin-top: 8px; }
+#collectStatusText { margin-left: 10px; }
+
+/* ---------------- 상품 레이더: 초안함 미디어 최종 검토(Phase 12.5.3.8) ---------------- */
+/* .affiliate-meta와 같은 시각적 톤(구분선/간격)을 쓰되 draft.source_type과 무관하게 모든
+   초안 카드에서 재사용 가능한 독립 클래스로 둔다 - 기존 .pr-library-thumb/a.secondary/
+   .status-badge를 그대로 재사용하므로 새 이미지·버튼 스타일은 추가하지 않는다. */
+.pr-draft-media { border-top: 1px dashed var(--border); margin-top: 8px; padding-top: 8px; font-size: 13px; }
+.pr-draft-media-thumb-wrap { cursor: pointer; max-width: 200px; margin: 8px 0; }
+.pr-draft-media-video { max-width: 100%; height: auto; display: block; margin: 8px 0; border-radius: 6px; }
+
+/* ---------------- 예약 루틴 설정 + 승인 글 일괄 예약 ---------------- */
+.routine-time-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; }
+.routine-time-row input[type="time"] { font-size: 14px; width: auto; }
+#batchPreviewCard .preview-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+#batchPreviewCard .preview-table th, #batchPreviewCard .preview-table td {
+  border: 1px solid var(--border); padding: 6px 10px; text-align: left;
+}
+#batchPreviewCard .preview-table th { background: var(--surface-alt); }
+
+/* ---------------- 설정 화면 ---------------- */
+.theme-choice-group { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; }
+.theme-choice-group label { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text); }
+
+/* ---------------- 데이터 관리 / 위험 영역 ---------------- */
+.danger-zone {
+  border-color: var(--danger);
+  background: var(--surface); /* color-mix 미지원 브라우저를 위한 대체값 */
+  background: color-mix(in srgb, var(--danger) 6%, var(--surface));
+}
+.danger-zone h4 { display: flex; align-items: center; gap: 8px; margin-top: 0; }
+
+/* ---------------- 모달 (초기화 확인 등) ---------------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--backdrop);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+.modal h3 { margin-top: 0; }
+.modal ul { margin: 6px 0 14px; padding-left: 20px; font-size: 13px; color: var(--text); }
+.modal .reset-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 10px 0; }
+.modal .reset-columns > div { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+@media (max-width: 560px) {
+  .modal .reset-columns { grid-template-columns: 1fr; }
+}
+
+/* 생성 실패 안내: 성공 CTA와 같은 자리에 인라인으로 보여준다(blocking alert 대체). */
+.gen-error { color: #b91c1c; }
+[data-theme="dark"] .gen-error { color: #fca5a5; }
+
+/* 부팅 오버레이: 화면 초기화가 끝날 때까지 뒤 화면으로 클릭이 가지 않게 덮는다. */
+.startup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.startup-overlay.is-hidden { display: none; }
+.startup-overlay-inner { text-align: center; }
+.startup-overlay-brand { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+.startup-overlay-text { font-size: 14px; color: var(--text-muted); }
+
+/* ==================== 반응형 / 좁은 화면 ==================== */
+@media (max-width: 900px) {
+  .hamburger-btn { display: flex; }
+  .app-shell { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed;
+    top: var(--topbar-height);
+    left: 0;
+    bottom: 0;
+    width: var(--sidebar-width);
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.2);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .main-content { padding-top: 56px; }
+  .choice-cards { grid-template-columns: 1fr; }
+}
+
+/* 사이드바가 오프캔버스로 바뀌는 900px보다 더 좁아졌을 때만 상태 카드도 1열로 줄입니다
+   (900px~640px 사이는 사이드바가 이미 숨겨져 2열이 들어갈 폭이 충분함). */
+@media (max-width: 640px) {
+  .dashboard-cards { grid-template-columns: 1fr; }
+}
+
+/* ---------------- 상품 레이더: 확장프로그램 연결(MVP1-2) ---------------- */
+/* 기존 .item-card 안에서만 쓰이던 .actions를 어디서나 쓸 수 있는 일반 버튼열 레이아웃으로 확장합니다. */
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+
+.pr-status-line { font-size: 13px; font-weight: 600; margin: 4px 0 10px; }
+.pr-status-line.pr-ok { color: var(--success); }
+.pr-status-line.pr-bad { color: var(--danger); }
+.pr-status-line.pr-warn { color: var(--warn); }
+
+.pr-pairing-code {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  text-align: center;
+  padding: 14px;
+  margin: 8px 0;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.pr-pairing-countdown { text-align: center; font-size: 13px; color: var(--text-muted); }
+
+.pr-toggle-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+.pr-toggle-row input[type="checkbox"]:disabled { cursor: not-allowed; }
+
+/* ---------------- 상품 레이더: 단계형 설치 안내 모달 ---------------- */
+.pr-install-steps { margin: 10px 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.pr-install-steps li { word-break: keep-all; overflow-wrap: break-word; }
+#prManageAddressInput { font-family: monospace; }
+
+/* ---------------- 상품 레이더: 비교·추천(Phase 12.5.1) ---------------- */
+/* minmax(0, 1fr)로 열 최소폭을 두지 않아 좁은 화면에서도 그리드 자체가 가로 스크롤을
+   만들지 않습니다(640px 아래에서는 아래 media query가 아예 1열로 강제). */
+.pr-compare-pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 10px 0; }
+.pr-compare-pick-item { display: flex; flex-direction: column; gap: 4px; cursor: pointer; margin: 0; }
+.pr-compare-pick-item input[type="checkbox"]:disabled { cursor: not-allowed; }
+.pr-compare-products-grid, .pr-rec-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+.pr-compare-fact-table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px; }
+.pr-compare-fact-table th { text-align: left; color: var(--text-muted); font-weight: normal; padding: 3px 8px 3px 0; white-space: nowrap; }
+.pr-compare-fact-table td { padding: 3px 0; word-break: break-word; }
+.pr-statement { margin: 6px 0; padding: 8px; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 6px; }
+.pr-statement p { margin: 0; word-break: keep-all; overflow-wrap: break-word; }
+.pr-evidence-details { margin-top: 6px; font-size: 12px; color: var(--text-muted); }
+.pr-evidence-details ul { margin: 4px 0; padding-left: 18px; word-break: break-all; }
+.pr-rec-missing ul { margin: 6px 0; padding-left: 18px; word-break: keep-all; overflow-wrap: break-word; }
+.pr-history-item { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 12px; }
+
+/* ---------------- 상품 레이더: 상품 이미지 카드(Phase 12.5.3.4) ---------------- */
+/* 고정 1080px DOM width 금지 - 실제 PNG(1080x1350) 비율은 유지하되 컨테이너 폭에 맞춘다. */
+.pr-media-preview-img { max-width: 100%; height: auto; display: block; border-radius: 6px; margin-bottom: 8px; }
+/* 상품 이미지: "현재 사용 중" / "새 후보" 두 영역을 구분(Phase 12.5.3.5) - 색/폰트는 손대지 않고 간격만 */
+.pr-media-section { margin-top: 14px; }
+.pr-media-section > strong { display: block; margin-bottom: 8px; }
+
+/* ---------------- 상품 레이더: 미디어 보관함(Phase 12.5.3.6/12.5.3.7) ---------------- */
+/* auto-fill/minmax(160px,1fr) 조합은 컨테이너가 넓을 때(약 700px+) 열이 무제한으로 늘어나
+   카드가 너무 좁아지고 액션 버튼이 줄바꿈되는 반응형 결함이 있었습니다(실브라우저 발견) -
+   명시적 열 수(3/2/1)로 고정하고, 카드에는 min/max-width를 둬서 "너무 좁은 4~5열"과
+   "wide desktop에서 카드가 과도하게 커지는 것" 양쪽을 다 방지합니다. minmax(0,1fr)은 카드
+   내부 콘텐츠(버튼 그룹)가 트랙보다 넓어져도 grid 자체가 horizontal overflow를 일으키지
+   않도록 트랙 최소폭을 0으로 둡니다. */
+.pr-library-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.pr-library-item { padding: 10px; min-width: 0; max-width: 340px; width: 100%; }
+.pr-library-thumb-wrap { cursor: pointer; }
+.pr-library-thumb { width: 100%; max-width: 100%; height: 120px; object-fit: cover; border-radius: 6px; display: block; background: var(--border); }
+.pr-library-missing { display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 12px; }
+/* 카드 액션 3개(찜/다운로드/사용) - 마크업 순서(찜 -> 다운로드 -> .big-btn)를 그대로 활용해
+   1번째 줄에 찜+다운로드 2등분, 2번째 줄에 "이 미디어 사용"(.big-btn)이 카드 전체 폭을
+   차지하도록 grid로 강제합니다(요청서 5절) - flex-wrap이 카드 폭에 따라 2~3줄로 들쭉날쭉
+   깨지던 문제를 명시적 2열 그리드로 대체. */
+.pr-library-item .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; }
+.pr-library-item .actions .big-btn { grid-column: 1 / -1; width: auto; }
+
+/* Common Media Viewer/Lightbox(요청서 24·25절) */
+.pr-viewer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+}
+.pr-viewer-content {
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.pr-viewer-media {
+  max-width: 100%;
+  max-height: 80vh;
+  height: auto;
+  width: auto;
+  border-radius: 6px;
+  background: var(--bg);
+  /* 세로로 긴 이미지도 viewport 안에서 스크롤 가능(요청서 24절) */
+  overflow-y: auto;
+}
+.pr-viewer-close {
+  position: absolute;
+  top: -36px;
+  right: 0;
+  background: transparent;
+  color: #fff;
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.pr-viewer-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 6px;
+}
+.pr-viewer-arrow-left { left: -8px; }
+.pr-viewer-arrow-right { right: -8px; }
+.pr-viewer-arrow:disabled { opacity: 0.3; cursor: default; }
+.pr-viewer-counter { color: #fff; font-size: 13px; }
+
+/* wide desktop(기본, 900px 초과) 3열 -> 콘텐츠 폭 ~900px 이하(실측 700px 캡처 포함) 2열 ->
+   375px 등 좁은 화면(480px 이하) 1열(요청서 1·10·11절 - 정확한 브레이크포인트는 이 파일이
+   이미 쓰는 900px/480px convention을 그대로 따릅니다). */
+@media (max-width: 900px) {
+  .pr-library-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .pr-library-grid { grid-template-columns: minmax(0, 1fr); }
+  .pr-library-item { max-width: none; }
+}
+@media (max-width: 640px) {
+  .pr-viewer-arrow-left { left: 4px; }
+  .pr-viewer-arrow-right { right: 4px; }
+}
+
+@media (max-width: 640px) {
+  .pr-compare-pick-grid,
+  .pr-compare-products-grid,
+  .pr-rec-products-grid { grid-template-columns: 1fr; }
+}
+
+/* 초안함 상단 제목줄 - 제목과 파괴적 작업 버튼을 나란히, 좁은 화면에서는 세로 배치 */
+.drafts-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.drafts-head h2 { margin: 0; }
+.drafts-head #btnPurgeDrafts { flex: none; }
+/* 초안함 상단 우측 버튼 묶음 - [+ 직접 글 작성]과 [초안함 비우기]를 한 줄에 둔다.
+   좁은 폭에서는 기존 .drafts-head의 flex-wrap이 그대로 동작해 자연스럽게 접힌다. */
+.drafts-head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* 직접 글 작성 - 선택한 로컬 파일 미리보기. 업로드 전 확인용이라 서버와 무관하다.
+   모달 폭을 넘지 않게 하고(max-width:100%), 높이만 적당히 제한한다. */
+/* 초안함 선택 삭제 툴바 - 기존 버튼 색상/모양을 그대로 쓰고 배치만 정한다. */
+.draft-selection-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
+
+/* 카드 메타라인의 선택 체크박스. 메타라인 텍스트와 세로 중앙을 맞춰 겹침을 막는다. */
+.draft-select { width: 16px; height: 16px; margin: 0 4px 0 0; vertical-align: middle; flex: 0 0 auto; cursor: pointer; }
+
+/* 초안 카드 안의 상시 미디어 미리보기.
+   글 10개를 빠르게 훑을 수 있도록 카드를 압도하지 않는 크기로 고정한다. */
+.draft-card-media-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.draft-card-media-cell { position: relative; display: inline-flex; cursor: pointer; }
+.draft-card-media-item {
+  display: block;
+  max-width: 100%;
+  max-height: 180px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, .04);
+  object-fit: contain;
+}
+/* 캐러셀 2~3장이 desktop에서 한 줄에 들어오고 순서를 한눈에 볼 수 있는 크기. */
+.draft-card-media-grid.is-carousel .draft-card-media-item { width: 132px; height: 132px; }
+.draft-card-media-cell:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; }
+.draft-card-media-index {
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  min-width: 18px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, .78);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  pointer-events: none;
+}
+@media (max-width: 560px) {
+  .draft-card-media-item { max-height: 150px; }
+  .draft-card-media-grid.is-carousel .draft-card-media-item { width: 96px; height: 96px; }
+}
+
+/* 미디어 조작 버튼 묶음 - [파일 선택]/[파일 변경]/[미디어 제거]/[첨부 지우기] */
+.media-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+/* 실제 file input은 숨기고 버튼으로만 연다(문구로 선택/변경을 구분하기 위해).
+   input[type="file"]에 width:100%를 주는 아래 공통 규칙보다 구체적이어야 하므로
+   input.hidden-file-input으로 지정하고, left로도 화면 밖에 두어 어떤 경우에도
+   레이아웃 폭에 영향을 주지 않게 한다. */
+input.hidden-file-input {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 초안 카드 미디어 편집 영역 */
+.draft-media-edit { margin: 6px 0 2px; }
+/* 교체/제거 예정인 기존 미디어는 흐리게 - 무엇이 바뀔지 저장 전에 보이게 한다. */
+.draft-card-media-grid.is-superseded { opacity: .38; }
+
+/* 영상 1개와 "저장된" 초안 카드 미디어는 예전처럼 인라인에서 크게 본다.
+   (영상은 인라인에서 바로 재생·확인해야 하고, 저장된 카드 썸네일은 기존 UI 그대로 둔다.) */
+.manual-draft-preview.is-single video.manual-draft-preview-item,
+.draft-card-media-grid.is-single video.draft-card-media-item,
+.draft-card-media-grid.is-single:not([data-draft-media-pending]) .draft-card-media-item {
+  max-height: 320px;
+  width: auto;
+  height: auto;
+}
+@media (max-width: 560px) {
+  .manual-draft-preview.is-single video.manual-draft-preview-item,
+  .draft-card-media-grid.is-single video.draft-card-media-item,
+  .draft-card-media-grid.is-single:not([data-draft-media-pending]) .draft-card-media-item { max-height: 220px; }
+}
+
+/* 작성 중 첨부한 이미지는 1장이든 캐러셀이든 같은 크기의 작은 썸네일로만 보여 준다.
+   크게 보는 것은 썸네일 클릭 → 공통 뷰어(Lightbox)가 맡는다. 예전에는 1장일 때만 인라인에서
+   크게 폈는데, 그때는 확대 보기 자체가 없었다. 크기는 기존 캐러셀 썸네일 값을 그대로 쓴다. */
+.manual-draft-preview img.manual-draft-preview-item { width: 104px; height: 104px; }
+[data-draft-media-pending] img.draft-card-media-item { width: 132px; height: 132px; }
+@media (max-width: 480px) {
+  [data-draft-media-pending] img.draft-card-media-item { width: 96px; height: 96px; }
+}
+
+.manual-draft-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.manual-draft-preview:empty { margin-top: 0; }
+.manual-draft-preview-cell { position: relative; display: inline-flex; }
+/* 썸네일 확대 보기 affordance - 직접 글 작성 / 초안 카드 편집 / 제휴 탭 미리보기가 공유한다.
+   Common Viewer(.pr-viewer-*)로 열리므로 여기서는 "클릭할 수 있다"는 표시만 담당한다. */
+.is-zoomable { cursor: zoom-in; border-radius: 10px; transition: transform .12s ease, box-shadow .12s ease; }
+.is-zoomable:hover, .is-zoomable:focus-visible { transform: translateY(-1px); box-shadow: 0 0 0 2px var(--accent, #3b82f6); outline: none; }
+.is-zoomable:hover img, .is-zoomable:focus-visible img { filter: brightness(1.04); }
+.af-media-preview-cell { display: inline-block; }
+/* 제휴 탭 첨부도 같은 원칙 - 인라인은 썸네일, 크게 보기는 클릭 후 뷰어. 초안 카드 썸네일과 같은 크기. */
+.af-media-preview-thumb {
+  display: block;
+  width: 132px;
+  height: 132px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid var(--border, #d0d7e2);
+  background: rgba(0, 0, 0, .04);
+}
+@media (max-width: 480px) {
+  /* 모바일에서 뷰어 닫기(X)를 누르기 쉽게 - 데스크톱 레이아웃은 그대로 */
+  .pr-viewer-close { top: -44px; min-width: 44px; min-height: 44px; font-size: 32px; padding: 6px 10px; }
+}
+.manual-draft-preview-item {
+  display: block;
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: 10px;
+  border: 1px solid var(--border, #d0d7e2);
+  background: rgba(0, 0, 0, .04);
+  object-fit: contain;
+}
+/* 캐러셀은 2~3개가 한 줄에 같이 보여야 순서를 한눈에 확인할 수 있다. */
+.manual-draft-preview.is-carousel .manual-draft-preview-item {
+  width: 104px;
+  height: 104px;
+}
+.manual-draft-preview-index {
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  min-width: 18px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, .78);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+@media (max-width: 480px) {
+  .manual-draft-preview-item { max-height: 160px; }
+  /* 좁은 화면에서는 1장이든 캐러셀이든 같은 크기로 더 줄인다(영상은 제외).
+     .is-carousel 쪽 선택자가 더 구체적이라 같은 값을 명시적으로 한 번 더 적어 준다. */
+  .manual-draft-preview img.manual-draft-preview-item,
+  .manual-draft-preview.is-carousel img.manual-draft-preview-item { width: 84px; height: 84px; }
+}
+
+/* 자료 후보 CTA - 목록 위에 위치. 선택 직후 바로 다음 작업을 실행할 수 있게 한다. */
+.candidate-cta { margin-bottom: 12px; }
+
+/* 상품 레이더 탭별 비우기 관리 바 - 5개 탭 모두 같은 자리, 같은 모양 */
+.pr-clear-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+}
+.pr-clear-bar:empty { display: none; }
+.pr-clear-all-check { display: inline-flex; align-items: center; gap: 6px; }
+.pr-clear-bar button { padding: 6px 12px; }
+.pr-clear-bar button:disabled { opacity: .5; cursor: not-allowed; }
+/* 카드 안 관리용 체크박스 - 비교 선택 체크박스와 시각적으로 구분되게 카드 좌상단에 둔다 */
+.pr-clear-check { display: block; margin-bottom: 6px; }
+.pr-shortlist-compare-label { display: block; cursor: pointer; }
+
+/* 찜한 상품 탭에서 "후보라 보호됨"을 체크박스 자리에 대신 표시 */
+.pr-clear-protected-note { display: block; margin-bottom: 6px; font-size: .85em; }
+
+/* 비교 대상 pool - 빈 상태 안내(줄바꿈 유지) + 불러오기 모달 목록 */
+.pr-compare-pool-empty { white-space: pre-line; }
+.pr-pool-import-item { display: block; margin-bottom: 6px; cursor: pointer; }
+#prPoolImportList { max-height: 320px; overflow-y: auto; }
+#prPoolImportSearch { width: 100%; margin-bottom: 8px; }

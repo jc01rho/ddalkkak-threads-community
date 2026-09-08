@@ -1,0 +1,54 @@
+// wrangler.jsonc.example
+// 이 파일은 TEMPLATE입니다. 그대로 "wrangler deploy"에 쓰이지 않도록 일부러 ".example"
+// 확장자를 유지합니다 - 실제 배포 전에 "wrangler.jsonc"로 복사한 뒤 아래 placeholder를
+// 실제 값으로 채우세요(그 실제 파일은 절대 git에 커밋하지 마세요 - .gitignore에 추가할 것).
+//
+// 이 Phase(12.5.6B)에서는 실제 Cloudflare account/bucket/credential을 만들지 않았고
+// "wrangler deploy"도 실행하지 않았습니다. 이 파일은 다음 Phase의 실제 배포 준비용
+// 참고 템플릿일 뿐입니다.
+{
+  "name": "REPLACE_ME-threads-media-relay",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // ===== R2 bucket binding =====
+  // 목적: HEAD(업로드 검증)/DELETE(cleanup)에만 사용합니다 - presigned URL 서명 자체에는
+  // binding이 아니라 아래 secrets(Access Key/Secret)를 씁니다(binding과 SigV4 서명은
+  // 서로 다른 capability - docs/design/threads-media-production-relay-design.md 참고).
+  "r2_buckets": [
+    {
+      "binding": "RELAY_BUCKET",
+      "bucket_name": "REPLACE_ME-bucket-name"
+    }
+  ],
+
+  // ===== Rate Limiting binding (burst abuse 방지용, 정확한 daily quota 보장 아님) =====
+  "unsafe": {
+    "bindings": [
+      {
+        "name": "SESSION_RATE_LIMITER",
+        "type": "ratelimit",
+        "namespace_id": "1001",
+        "simple": { "limit": 20, "period": 60 }
+      }
+    ]
+  },
+
+  // ===== 일반 vars(비밀 아님) =====
+  "vars": {
+    "R2_ACCOUNT_ID": "REPLACE_ME-cloudflare-account-id",
+    "R2_BUCKET_NAME": "REPLACE_ME-bucket-name",
+    "PRESIGNED_URL_TTL_SECONDS": "1800"
+  }
+
+  // ===== secrets(절대 여기 값으로 적지 말 것 - wrangler secret put 으로만 등록) =====
+  // wrangler secret put R2_ACCESS_KEY_ID
+  // wrangler secret put R2_SECRET_ACCESS_KEY
+  // wrangler secret put RELAY_SESSION_HMAC_SECRET
+  //
+  // relay를 쓰는 앱이 자신을 증명하는 client key. 앱의 .env(THREADS_RELAY_CLIENT_KEY)에
+  // 같은 값을 넣습니다. 위 HMAC secret과는 용도가 다르니 재사용하지 말고 별도로 생성하세요
+  // (예: openssl rand -base64 48). 등록하지 않으면 모든 session 요청이 거부됩니다.
+  // wrangler secret put THREADS_RELAY_CLIENT_KEY
+}

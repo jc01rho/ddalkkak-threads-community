@@ -1,0 +1,102 @@
+[
+  {
+    "name": "Hacker News (Front Page)",
+    "url": "https://news.ycombinator.com/rss"
+  },
+  {
+    "name": "TechCrunch",
+    "url": "https://techcrunch.com/feed/"
+  },
+  {
+    "name": "The Verge",
+    "url": "https://www.theverge.com/rss/index.xml"
+  },
+  {
+    "name": "MIT Technology Review",
+    "url": "https://www.technologyreview.com/feed/"
+  },
+  {
+    "name": "Google AI Blog",
+    "url": "https://blog.google/technology/ai/rss/"
+  },
+  {
+    "name": "GeekNews (긱뉴스)",
+    "url": "https://feeds.feedburner.com/geeknews-feed"
+  },
+  {
+    "name": "전자신문",
+    "url": "https://rss.etnews.com/Section901.xml"
+  },
+  {
+    "name": "연합뉴스",
+    "url": "https://www.yna.co.kr/rss/news.xml"
+  },
+  {
+    "name": "경향신문",
+    "url": "https://www.khan.co.kr/rss/rssdata/total_news.xml"
+  },
+  {
+    "name": "BBC World",
+    "url": "https://feeds.bbci.co.uk/news/world/rss.xml"
+  },
+  {
+    "name": "아시아경제 유통",
+    "url": "https://www.asiae.co.kr/rss/economy.htm"
+  },
+  {
+    "name": "한국경제 생활",
+    "url": "https://www.hankyung.com/feed/life"
+  },
+  {
+    "name": "Guardian Life and style",
+    "url": "https://www.theguardian.com/lifeandstyle/rss"
+  },
+  {
+    "name": "식품음료신문",
+    "url": "https://www.thinkfood.co.kr/rss/allArticle.xml"
+  },
+  {
+    "name": "Guardian Food",
+    "url": "https://www.theguardian.com/food/rss"
+  },
+  {
+    "name": "Eater",
+    "url": "https://www.eater.com/rss/index.xml"
+  },
+  {
+    "name": "보그 코리아",
+    "url": "https://www.vogue.co.kr/feed/"
+  },
+  {
+    "name": "Guardian Fashion",
+    "url": "https://www.theguardian.com/fashion/rss"
+  },
+  {
+    "name": "Hypebeast",
+    "url": "https://hypebeast.com/feed"
+  },
+  {
+    "name": "여행신문",
+    "url": "https://www.traveltimes.co.kr/rss/allArticle.xml"
+  },
+  {
+    "name": "트래비 매거진",
+    "url": "https://www.travie.com/rss/allArticle.xml"
+  },
+  {
+    "name": "Guardian Travel",
+    "url": "https://www.theguardian.com/travel/rss"
+  },
+  {
+    "name": "Guardian Culture",
+    "url": "https://www.theguardian.com/culture/rss"
+  },
+  {
+    "name": "한국경제 연예",
+    "url": "https://www.hankyung.com/feed/entertainment"
+  },
+  {
+    "name": "Guardian Media",
+    "url": "https://www.theguardian.com/media/rss"
+  }
+]

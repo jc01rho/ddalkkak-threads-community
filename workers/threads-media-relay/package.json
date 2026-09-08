@@ -1,0 +1,21 @@
+{
+  "name": "threads-media-relay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "딸깍 Threads 공장 - Production Media Relay control API (Cloudflare Worker). Windows app root와 독립된 서브프로젝트입니다. 이 devDependencies는 root package.json과 절대 병합하지 않습니다.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260812.1",
+    "@types/node": "^26.2.0",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "aws4fetch": "^1.0.20"
+  },
+  "homepage": "https://pulse-audio.co.kr/",
+  "license": "AGPL-3.0"
+}

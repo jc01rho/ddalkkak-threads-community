@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<script>
+// 테마 결정을 최대한 일찍(첫 페인트 전) 적용해 반대 테마가 잠깐 보이는 현상(FOUC)을 최소화합니다.
+// app.js의 initTheme()이 나중에 동일한 로직으로 다시 한 번 정확히 동기화합니다.
+(function () {
+  try {
+    var pref = localStorage.getItem("ttalkkak_theme_pref") || "auto";
+    var resolved = (pref === "light" || pref === "dark")
+      ? pref
+      : ((window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", resolved);
+  } catch (e) { /* localStorage 접근 불가 시 기본(라이트)으로 둡니다 */ }
+})();
+// 화면 언어도 마찬가지로 첫 페인트 전에 판정해 html[lang]/html[data-language]에 반영합니다
+// (한국어가 잠깐 보였다가 영어로 바뀌는 현상 최소화). app.js의 initLanguage()가 이어서
+// 동일 로직(i18n.js의 i18nResolveLanguage)으로 다시 동기화하고 화면 문구를 채웁니다.
+(function () {
+  try {
+    var pref = localStorage.getItem("ddalkkak.uiLanguage") || "auto";
+    var lang = (pref === "ko" || pref === "en")
+      ? pref
+      : (((navigator.language || "").toLowerCase().indexOf("ko") === 0) ? "ko" : "en");
+    document.documentElement.setAttribute("lang", lang);
+    document.documentElement.setAttribute("data-language", lang);
+  } catch (e) { /* 접근 불가 시 기본(ko)으로 둡니다 */ }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>딸깍 Threads 공장 v1</title>
+<link rel="icon" href="img/app-icon.png" type="image/png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<!-- 부팅 오버레이. 화면 초기화가 끝나기 전에는 사이드바 클릭이
+     아무 일도 하지 않으므로, 그 사이 "눌러도 되는 화면"처럼 보이지 않게 덮어 둔다.
+     기본값이 '보임'이고 JS가 초기화를 마쳤을 때만 숨긴다(스크립트가 늦어도 안전). -->
+<div id="startupOverlay" class="startup-overlay" role="status" aria-live="polite">
+  <div class="startup-overlay-inner">
+    <div class="startup-overlay-brand" data-i18n="brandName">딸깍 Threads 공장</div>
+    <div class="startup-overlay-text" data-i18n="startupPreparing">준비 중...</div>
+  </div>
+</div>
+<div id="app">
+
+  <header id="statusBar">
+    <button type="button" class="brand" id="brandHomeBtn" data-i18n-aria-label="ariaGotoDashboard" aria-label="홈으로 이동"><span class="brand-icon-wrap"><img class="brand-icon" src="img/app-icon.png" alt="" /></span><span data-i18n="brandName">딸깍 Threads 공장</span> <span class="ver" data-i18n="verLabel">v1.1</span></button>
+    <div class="status-chips" id="statusChips">
+      <span class="chip" id="chipClaude" data-i18n="chipClaudeChecking">Claude 확인중...</span>
+      <span class="chip" id="chipThreads" data-i18n="chipThreadsChecking">Threads 확인중...</span>
+      <span class="chip" id="chipAuto" data-i18n="chipAutoChecking">자동발행 확인중...</span>
+      <span class="chip" id="chipCreated">오늘 생성 -</span>
+      <span class="chip" id="chipPublished">오늘 발행 -</span>
+      <span class="chip" id="chipNext">다음 예약 -</span>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <button type="button" id="mobileSidebarToggle" class="hamburger-btn" data-i18n-aria-label="ariaOpenMenu" aria-label="메뉴 열기" aria-expanded="false" aria-controls="sideNav">
+      <span class="hamburger-icon" aria-hidden="true"></span>
+    </button>
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <nav id="sideNav" class="sidebar">
+      <div class="sidebar-top">
+        <button type="button" class="sidebar-brand" id="sidebarBrandBtn" data-i18n-aria-label="ariaGotoDashboard" aria-label="홈으로 이동"><span class="sidebar-brand-icon-wrap"><img class="sidebar-brand-icon" src="img/app-icon.png" alt="" /></span><span data-i18n="brandName">딸깍 Threads 공장</span></button>
+      </div>
+
+      <!-- 스마트 에디터 - 일반 nav-item 목록과 분리된 별도 진입 카드.
+           "launch" 버튼이라 기존 .qa-btn[data-view]
+           범용 이동 바인딩(app.js initNav())만 쓰고 .nav-item 클래스는 붙이지 않습니다 -
+           그래야 showView()의 active 토글 대상에서 제외되어(스마트 에디터가 원래 그랬듯)
+           항상 고유 색상 identity를 유지합니다(활성 상태 배경으로 덮이지 않음). -->
+      <div class="sidebar-hero-group">
+        <button type="button" class="sidebar-hero-card sidebar-hero-smarteditor qa-btn" data-view="editor" id="btnOpenSmartEditor">
+          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
+          <span class="nav-label" data-i18n="navSmartEditor">스마트 에디터</span>
+        </button>
+      </div>
+
+      <div class="sidebar-menu">
+        <!-- P1 생산라인: 자료 수집 → 자료 보관함 → 초안함 → 예약 관리가 하나의 작업 흐름임을
+             시각적으로 표현한다(pipeline-line: 세로 연결선). 대시보드 메뉴는 제거됨(상단 상태바가
+             전역 상태 담당). P1.4: 사이드바 점등 안내는 제거됨 - 다음 길 안내는 화면 내 CTA가 한다. -->
+        <div class="sidebar-menu-group pipeline-line">
+          <button class="nav-item nav-thin nav-color-collect" data-view="collect">
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h4l2 3h4l2-3h4"/><path d="M4 12l1.5-6.5A2 2 0 0 1 7.44 4h9.12a2 2 0 0 1 1.94 1.5L20 12"/><path d="M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/></svg></span>
+            <span class="nav-label" data-i18n="navCollect">자료 수집</span>
+          </button>
+          <button class="nav-item nav-thin nav-color-materials" data-view="materials">
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"/><path d="M10 13h4"/></svg></span>
+            <span class="nav-label" data-i18n="navMaterials">자료 보관함</span>
+          </button>
+          <button class="nav-item nav-thin nav-color-drafts" data-view="drafts">
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></span>
+            <span class="nav-label" data-i18n="navDrafts">초안함</span>
+          </button>
+          <button class="nav-item nav-thin nav-color-schedule" data-view="schedulemgmt">
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/></svg></span>
+            <span class="nav-label" data-i18n="navScheduleMgmt">예약 관리</span>
+          </button>
+        </div>
+        <div class="sidebar-menu-group">
+          <button class="nav-item nav-thin nav-color-settings" data-view="settings">
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.2.42.57.74 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+            <span class="nav-label" data-i18n="navSettings">설정</span>
+          </button>
+        </div>
+      </div>
+      <!-- P1.1: 설정 화면에서 옮겨 온 화면 초기화 - 기존 handler(id 동일, initDataManagement)를
+           그대로 재사용하는 조용한 보조 utility. 화면/UI 상태만 초기화하며 실제 데이터는
+           건드리지 않는다(클릭 시 기존 확인 모달 표시). -->
+      <button type="button" class="sidebar-utility-btn" id="btnResetScreenPrefs"><span aria-hidden="true">↻</span> <span data-i18n="btnResetScreenPrefs">화면 초기화</span></button>
+    </nav>
+
+    <main id="content" class="main-content">
+
+      <!-- P1.3: v1.1 정식 시작/메인 화면. 통계판/상태판이 아니라 "오늘 어디서 시작할 것인가"를
+           고르는 단순한 입구다. 사이드바 메뉴는 추가하지 않으며 브랜드/로고 클릭으로 복귀한다. -->
+      <section id="view-home" class="view active">
+        <div class="home-hero" id="homeHeroSlot">
+          <!-- 향후 최종 히어로 일러스트는 이 slot 안에 img 태그 1장(src: img/home-hero.png 예정)
+               교체로 적용한다. 아직 파일이 없으므로 존재하지 않는 경로를 넣지 않고(깨진 이미지 금지)
+               CSS 그라디언트 + 공장 흐름 텍스트를 placeholder로 표시한다. .home-hero img 규칙 준비됨. -->
+          <div class="home-hero-flow">
+            <span class="home-hero-node" data-i18n="home.heroInputs">상품 · 자료 · 아이디어</span>
+            <span class="home-hero-arrow" aria-hidden="true">→</span>
+            <span class="home-hero-node home-hero-factory" data-i18n="home.heroFactory">딸깍 공장</span>
+            <span class="home-hero-arrow" aria-hidden="true">→</span>
+            <span class="home-hero-node" data-i18n="home.heroOutputs">글 · 카드 · 예약 · Threads</span>
+          </div>
+        </div>
+        <h2 data-i18n="home.copyTitle">오늘 무엇을 만들까요?</h2>
+        <p class="muted" data-i18n="home.copySubtitle">딸깍은 찾고, 만들고, 예약하는 일을 더 쉽게 해줍니다.</p>
+        <div class="home-start-grid">
+          <button type="button" class="home-start-card qa-btn" data-view="editor">
+            <strong data-i18n="home.cardEditorTitle">직접 글 만들기</strong>
+            <span class="muted" data-i18n="home.cardEditorDesc">내 주제로 바로 글을 작성합니다.</span>
+          </button>
+          <button type="button" class="home-start-card qa-btn" data-view="collect">
+            <strong data-i18n="home.cardCollectTitle">자료부터 수집하기</strong>
+            <span class="muted" data-i18n="home.cardCollectDesc">필요한 자료를 모은 뒤 글 만들기로 이어갑니다.</span>
+          </button>
+        </div>
+      </section>
+
+      <section id="view-dashboard" class="view">
+        <h2 data-i18n="dashboardTitle">대시보드</h2>
+        <div id="dashboardBody" class="card" data-i18n="loading">불러오는 중...</div>
+      </section>
+
+      <section id="view-editor" class="view">
+        <h2 data-i18n="editorTitle">스마트 에디터</h2>
+        <div class="editor-tabs" id="editorTabs">
+          <button type="button" class="editor-tab active" data-editor-tab="general" data-i18n="editorTabGeneral">일반 글 작성</button>
+          <button type="button" class="editor-tab" data-editor-tab="affiliate" data-i18n="editorTabAffiliate">제휴 마케팅</button>
+        </div>
+
+        <div class="editor-panel active" id="editorPanelGeneral" data-editor-panel="general">
+          <p class="muted editor-form-max" data-i18n="editorGeneralIntro">Threads에 올릴 일반 글 6개를 만드는 두 가지 방법입니다. 둘 다 생성이 끝나면 초안함으로 이동해 검수·수정·승인할 수 있습니다.</p>
+          <div class="editor-form-max choice-cards">
+            <div class="card choice-card">
+              <h3 data-i18n="editorAutoTitle">자동으로 자료 골라 6개 만들기</h3>
+              <p class="muted" data-i18n="editorAutoDesc">등록된 자료 중에서 딸깍이 자동으로 골라 글 6개를 한 번에 만듭니다. 직접 고르는 과정이 없어 가장 간편한 방법입니다.</p>
+              <button id="btnGenerate" class="big-btn" data-i18n="btnGenerateAuto">Threads 글 6개 만들기 (자동 선택)</button>
+              <p id="generateAutoStatus" class="muted"></p>
+            </div>
+            <div class="card choice-card">
+              <h3 data-i18n="editorManualTitle">자료를 직접 선택해서 만들기</h3>
+              <p class="muted" data-i18n="editorManualDesc">자료 수집 화면의 "자료 후보 검수" 목록에서 원하는 자료를 직접 골라 그 자료로 글을 만듭니다.</p>
+              <button type="button" class="big-btn alt qa-btn" data-view="collect" data-i18n="btnGotoCollectFromEditor">자료 수집 화면에서 자료 선택하기</button>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="editor-panel" id="editorPanelAffiliate" data-editor-panel="affiliate">
+          <p class="muted editor-form-max" data-i18n="affiliateIntro">
+            제휴 상품 정보를 직접 입력하면, 사진·영상 없이도 Threads에 올릴 수 있는 홍보 문구
+            6개를 만들어 초안함으로 보냅니다. 이 화면은 제휴처 API 연동이나 상품 페이지 자동 수집·이미지/영상
+            다운로드를 하지 않으며, 아래에 직접 입력한 내용만 근거로 작성됩니다.
+          </p>
+
+          <div class="editor-form-max form-col" id="affiliateForm">
+            <div class="card form-col">
+              <h4 data-i18n="affiliateBasicInfo">기본 상품 정보</h4>
+              <label><span data-i18n="labelProductName">상품명</span> <span class="required">*</span>
+                <input id="afProductName" type="text" data-i18n-placeholder="phProductName" placeholder="예: 무선 이어폰 OO" maxlength="200" />
+              </label>
+              <label><span data-i18n="labelAffiliateUrl">제휴 링크</span> <span class="required">*</span>
+                <input id="afAffiliateUrl" type="text" data-i18n-placeholder="phAffiliateUrl" placeholder="https://link.coupang.com/... 또는 https://naver.me/..." maxlength="2000" />
+              </label>
+            </div>
+
+            <div class="card form-col">
+              <h4 data-i18n="affiliateDetailSettings">홍보 상세 설정</h4>
+              <label><span data-i18n="labelFeatures">상품 특징·장점 (여러 줄 입력 가능)</span> <span class="required">*</span>
+                <textarea id="afFeatures" data-i18n-placeholder="phFeatures" placeholder="예: 노이즈 캔슬링 지원&#10;배터리 24시간 지속&#10;IPX4 방수" maxlength="4000"></textarea>
+              </label>
+              <label><span data-i18n="labelTargetAudience">추천 대상 (선택)</span>
+                <textarea id="afTargetAudience" data-i18n-placeholder="phTargetAudience" placeholder="예: 출퇴근길에 음악을 자주 듣는 사람" maxlength="1000"></textarea>
+              </label>
+              <label><span data-i18n="labelCaveats">주의할 점 또는 단점 (선택)</span>
+                <textarea id="afCaveats" data-i18n-placeholder="phCaveats" placeholder="예: 케이스가 다소 큰 편" maxlength="1000"></textarea>
+              </label>
+              <label><span data-i18n="labelUsageStatus">직접 사용 여부</span> <span class="required">*</span></label>
+              <div class="usage-status-group">
+                <label><input type="radio" name="afUsageStatus" value="used" /> <span data-i18n="usageUsed">직접 사용함</span></label>
+                <label><input type="radio" name="afUsageStatus" value="not_used" checked /> <span data-i18n="usageNotUsed">직접 사용하지 않음</span></label>
+              </div>
+              <label><span data-i18n="labelExtraNote">추가 관점 또는 원하는 말투 (선택)</span>
+                <textarea id="afExtraNote" data-i18n-placeholder="phExtraNote" placeholder="예: 담백하게, 가격 얘기는 빼고" maxlength="1000"></textarea>
+              </label>
+            </div>
+
+            <div class="card form-col">
+              <h4 data-i18n="affiliateMediaSection">미디어 및 고지 설정</h4>
+              <label><span data-i18n="labelMediaAttach">내 사진·영상 첨부 (선택)</span>
+                <input type="file" id="afMediaInput" accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,video/webm" />
+              </label>
+              <p class="muted" data-i18n="mediaAttachHint">직접 촬영했거나 사용할 권리가 있는 사진·영상만 첨부하세요. 이미지 또는 영상 1개만 첨부할 수 있고, 상품 페이지의 이미지를 다운로드해 올리지 마세요.</p>
+              <div class="card" id="afMediaPreviewBox" style="display:none;">
+                <div id="afMediaPreviewContent"></div>
+                <div id="afMediaStatus" class="muted"></div>
+                <button type="button" class="danger" id="btnRemoveAfMedia" data-i18n="btnRemoveMedia">첨부 취소</button>
+              </div>
+              <label><span data-i18n="labelDisclosure">경제적 이해관계 표시 문구 (기본값 제공, 수정 가능)</span>
+                <textarea id="afDisclosure" maxlength="500"></textarea>
+              </label>
+            </div>
+
+            <div class="card">
+              <button id="btnGenerateAffiliate" class="big-btn" data-i18n="btnGenerateAffiliate">제휴글 6개 만들기</button>
+              <p id="affiliateGenerateStatus" class="muted"></p>
+              <div id="affiliateFormError" class="muted"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-collect" class="view">
+        <h2 data-i18n="collectTitle">자료 수집</h2>
+
+        <div class="card">
+          <div class="mode-tabs" id="collectModeTabs">
+            <button type="button" class="mode-tab active" data-mode="auto" data-i18n="modeAuto">자동 수집</button>
+            <button type="button" class="mode-tab" data-mode="keyword" data-i18n="modeKeyword">글감 직접 입력</button>
+            <button type="button" class="mode-tab" data-mode="url" data-i18n="modeUrl">URL 직접 입력</button>
+            <button type="button" class="mode-tab" data-mode="mixed" data-i18n="modeMixed">혼합 사용</button>
+          </div>
+          <p class="muted" id="collectModeDesc">딸깍이 관리하는 기본 자료원과 직접 추가한 RSS에서 자료를 수집합니다.</p>
+        </div>
+
+        <div class="card" id="collectBlockAuto">
+          <strong data-i18n="collectAutoTitle">자동 수집</strong>
+          <p class="muted" data-i18n="collectAutoDesc">딸깍이 관리하는 기본 자료원과 직접 추가한 RSS에서 새 자료를 가져옵니다.</p>
+        </div>
+
+        <div class="card form-col" id="collectBlockKeyword" style="display:none;">
+          <strong data-i18n="collectKeywordTitle">글감 직접 입력</strong>
+          <div class="preset-row">
+            <span class="muted" data-i18n="presetLabel">프리셋 (누르면 아래 입력란이 채워집니다):</span>
+            <button type="button" class="secondary preset-btn" data-preset="ai" data-i18n="presetAi">AI·자동화</button>
+            <button type="button" class="secondary preset-btn" data-preset="youtube" data-i18n="presetYoutube">유튜브·콘텐츠</button>
+            <button type="button" class="secondary preset-btn" data-preset="solo" data-i18n="presetSolo">1인 사업·생산성</button>
+          </div>
+          <label><span data-i18n="labelKwInclude">글감 키워드·주제 (쉼표 또는 줄바꿈으로 구분)</span>
+            <textarea id="kwInclude" placeholder="AI 자동화, 유튜브 정책, 1인 사업자"></textarea>
+          </label>
+          <label><span data-i18n="labelKwExclude">제외 키워드</span>
+            <textarea id="kwExclude" placeholder="코인, 도박, 정치"></textarea>
+          </label>
+          <label><span data-i18n="labelKwNote">참고 설명 또는 관점</span>
+            <textarea id="kwNote" placeholder="1인 사업자가 실제 업무에 활용하는 관점으로 정리"></textarea>
+          </label>
+          <label><span data-i18n="labelKwCount">생성할 후보 수 (키워드마다 1개씩, 최대 10개)</span>
+            <input id="kwCandidateCount" type="number" min="1" max="10" value="3" />
+          </label>
+          <p class="muted" data-i18n="keywordHint">※ 최신 정보를 찾으려면 자동 수집 또는 URL 직접 입력을 이용해 주세요. 여기에 등록한 주제는 근거 자료가 없으므로 경험·의견·질문·일반적인 조언 형태로만 작성됩니다.</p>
+        </div>
+
+        <div class="card form-col" id="collectBlockUrl" style="display:none;">
+          <strong data-i18n="collectUrlTitle">URL 직접 입력</strong>
+          <label><span data-i18n="labelUrlBulk">URL 목록 (한 줄에 하나씩, 최대 20개)</span>
+            <textarea id="urlBulkInput" placeholder="https://example.com/article1&#10;https://example.com/article2"></textarea>
+          </label>
+          <label class="muted"><input type="checkbox" id="urlRefreshExisting" /> <span data-i18n="urlRefreshExisting">이미 수집한 주소도 다시 수집하여 갱신</span></label>
+          <div id="urlResultsList" class="list"></div>
+          <button type="button" class="secondary" id="btnRetryFailedUrls" style="display:none;" data-i18n="btnRetryFailedUrls">실패한 URL만 다시 시도</button>
+        </div>
+
+        <div class="card collect-actions-row">
+          <button id="btnStartCollect" class="big-btn" data-i18n="btnStartCollect">수집 시작</button>
+          <button type="button" class="secondary" id="btnResetCollectForm" data-i18n="btnResetCollectForm">입력값 초기화</button>
+          <span id="collectStatusText" class="muted"></span>
+        </div>
+
+        <p class="muted" id="collectNoResultNote" data-i18n="collectNoResultNote">아직 이번 작업 결과가 없습니다.</p>
+
+        <div class="card" id="candidateReviewSection" style="display:none;">
+          <h3 data-i18n="candidateReviewTitle">자료 후보 검수</h3>
+          <div class="candidate-toolbar">
+            <button type="button" class="secondary" id="btnSelectAll" data-i18n="btnSelectAll">전체 선택</button>
+            <button type="button" class="secondary" id="btnSelectNone" data-i18n="btnSelectNone">전체 해제</button>
+            <button type="button" class="secondary" id="btnSelectOk" data-i18n="btnSelectOk">정상 자료만 선택</button>
+            <button type="button" class="danger" id="btnDeleteSelected" data-i18n="btnDeleteSelected">선택 삭제</button>
+            <label><input type="checkbox" id="chkHideFailed" /> <span data-i18n="chkHideFailed">실패 자료 숨기기</span></label>
+            <label><input type="checkbox" id="chkHideDuplicate" /> <span data-i18n="chkHideDuplicate">중복 의심 숨기기</span></label>
+            <select id="candidateSort">
+              <option value="score" data-i18n="sortScore">점수순</option>
+              <option value="recent" data-i18n="sortRecent">최신순</option>
+            </select>
+            <select id="candidateSourceFilter">
+              <option value="" data-i18n="sourceAll">전체 수집 방식</option>
+              <option value="rss" data-i18n="sourceRss">자동수집</option>
+              <option value="keyword" data-i18n="sourceKeyword">키워드</option>
+              <option value="url" data-i18n="sourceUrl">URL</option>
+              <option value="text" data-i18n="sourceText">텍스트</option>
+            </select>
+          </div>
+          <div id="candidateCountLabel" class="muted"></div>
+          <!-- 후보를 최대 20건만 보여주므로, 나머지 자료가 사라진 것으로 오해하지 않도록
+               자료함 전체 건수를 함께 알리고 자료 보관함으로 가는 길을 바로 옆에 둡니다.
+               (사이드바는 메뉴판, 화면 안 버튼은 길 안내) 숫자는 API 값으로만 채웁니다. -->
+          <div class="candidate-library-note">
+            <span id="candidateLibraryNote" class="muted"></span>
+            <button type="button" class="secondary qa-btn" data-view="materials" data-i18n="btnGotoMaterialsFromCandidates">자료 보관함에서 전체 보기</button>
+          </div>
+
+          <!-- 긴 후보 목록 끝까지 내려가지 않도록 CTA를 목록 위로 배치합니다(기존 블록 이동). -->
+          <div class="card candidate-cta">
+            <label><span data-i18n="labelGenCount">생성할 글 개수 (최대 6개)</span>
+              <input id="genCountInput" type="number" min="1" max="6" value="6" />
+            </label>
+            <button id="btnGenerateFromCandidates" class="big-btn" disabled data-i18n="btnGenerateFromCandidates">선택 자료로 Threads 글 만들기</button>
+            <p id="candidateGenerateStatus" class="muted"></p>
+            <div id="generateDisabledReason" class="muted"></div>
+          </div>
+
+          <div id="candidateList" class="list"></div>
+        </div>
+      </section>
+
+      <section id="view-materials" class="view">
+        <h2 data-i18n="materialsTitle">자료 보관함</h2>
+        <div id="materialsSummary" class="card muted" data-i18n="loading">불러오는 중...</div>
+        <div class="card form-row">
+          <input id="urlInput" type="text" data-i18n-placeholder="phUrlInput" placeholder="공개 웹페이지 URL 붙여넣기" />
+          <button id="btnAddUrl" data-i18n="btnAddUrl">URL 추가</button>
+        </div>
+        <div class="card form-col">
+          <input id="textTitleInput" type="text" data-i18n-placeholder="phTextTitle" placeholder="제목(선택)" />
+          <textarea id="textInput" data-i18n-placeholder="phTextInput" placeholder="직접 붙여넣은 텍스트 자료"></textarea>
+          <button id="btnAddText" data-i18n="btnAddText">텍스트 추가</button>
+        </div>
+        <div id="materialsList" class="list"></div>
+      </section>
+
+
+
+      <section id="view-drafts" class="view">
+        <div class="drafts-head">
+          <h2 data-i18n="draftsTitle">초안함</h2>
+          <div class="drafts-head-actions">
+            <!-- 외부(ChatGPT 등)에서 이미 쓴 글을 그대로 붙여넣어 초안으로 넣는 입구.
+                 사이드바 메뉴를 늘리지 않고 초안함 내부 기능으로 둔다. -->
+            <button type="button" class="big-btn" id="btnManualDraft" data-i18n="btnManualDraft">+ 직접 글 작성</button>
+            <button type="button" class="secondary" id="btnPurgeDrafts" data-i18n="btnPurgeDrafts">초안함 비우기</button>
+          </div>
+        </div>
+        <p class="muted" data-i18n="draftsIntro">만든 글을 확인하고 수정한 뒤 승인하세요.</p>
+        <p class="muted" id="draftsPurgeFeedback" style="display:none;"></p>
+
+        <!-- P1.3: 큰 상태 select 대신 구매자용 filter chip. 내부 workflow 상태(예약됨/발행중/
+             발행됨/실패 등 downstream)는 초안함이 아니라 예약 관리에서 확인한다(DB는 그대로). -->
+        <div id="draftFilterChips" class="draft-filter-chips" role="group" aria-label="상태 필터"></div>
+        <!-- 선택 삭제: 범위는 항상 "현재 필터에서 화면에 보이는 초안"뿐이다. -->
+        <div id="draftSelectionBar" class="draft-selection-bar" style="display:none;">
+          <button type="button" class="secondary" id="btnSelectAllDrafts" data-i18n="draftSelect.selectAll">전체 선택</button>
+          <button type="button" class="danger" id="btnDeleteSelectedDrafts" disabled>선택 삭제 (0)</button>
+        </div>
+        <div id="draftsList" class="list"></div>
+      </section>
+
+      <section id="view-schedulemgmt" class="view">
+        <h2 data-i18n="schedMgmtTitle">예약 관리</h2>
+
+        <!-- P1.6(AUD-P0-001): 자동 발행 ON/OFF의 canonical 조작 UI. 대시보드 화면이 제거되면서
+             구매자가 이 스위치에 접근할 방법이 사라졌던 문제의 복구다. 상단 상태바 chip은 계속
+             "표시"만 담당하고, 실제 조작은 승인→예약→발행의 작업 공간인 이 화면이 담당한다.
+             기존 POST /api/status/auto-publish를 그대로 재사용한다(새 서버 API 없음). -->
+        <div class="card" id="autoPublishControlCard">
+          <label>
+            <strong data-i18n="labelAutoPublish">자동 발행</strong>
+            <span id="autoPublishControlState" class="status-badge status-manual"></span>
+            <button type="button" class="secondary qa-btn" data-view="settings" id="btnGotoAutoPublishSetting" data-i18n="btnChangeInSettings">설정에서 변경</button>
+          </label>
+          <p class="muted" id="autoPublishControlDesc"></p>
+          <!-- P1.6(AUD-P1-003): 미디어 발행 구성(relay/공개 게이트웨이)이 없는 설치본에서만
+               표시되는 preflight 안내. 정상 release(운영 relay 주입됨)에서는 나타나지 않는다. -->
+          <p class="muted" id="mediaPublishPreflightNote" style="display:none;"></p>
+        </div>
+
+        <div class="editor-tabs schedmgmt-tabs" id="schedMgmtTabs">
+          <button type="button" class="editor-tab active" data-schedmgmt-tab="routine" data-i18n="schedTabRoutine">자동배치 시간표</button>
+          <button type="button" class="editor-tab" data-schedmgmt-tab="batch" data-i18n="schedTabBatch">승인 글 자동배치</button>
+          <button type="button" class="editor-tab" data-schedmgmt-tab="scheduled" data-i18n="schedTabScheduled">예약 목록</button>
+          <button type="button" class="editor-tab" data-schedmgmt-tab="publishlog" data-i18n="schedTabPublishlog">발행 기록</button>
+        </div>
+
+        <div class="editor-panel active" id="schedMgmtPanelRoutine" data-schedmgmt-panel="routine">
+          <div class="card form-col" id="scheduleRoutineCard">
+            <h3 data-i18n="routineTitle">자동배치 시간표</h3>
+            <p class="muted" data-i18n="routineDesc">매일 반복할 예약 시간을 등록해두면, "승인 글 자동배치"에서 승인된 글들을 이 시간표에 맞춰 자동으로 배치할 수 있습니다.</p>
+            <p class="muted" data-i18n="schedRoutineHelp">설정한 시간표는 승인 글을 자동으로 배치할 때 사용됩니다. 실제 발행 예정 시간은 예약 목록에서 확인하세요.</p>
+            <div id="routineTimesList" class="list"></div>
+            <button type="button" class="secondary" id="btnAddRoutineTime" data-i18n="btnAddRoutineTime">+ 시간 추가</button>
+            <label data-i18n="labelWeekdays">사용할 요일</label>
+            <div class="usage-status-group" id="routineWeekdaysGroup">
+              <label><input type="checkbox" class="routine-weekday" value="1" /> <span data-i18n-weekday="1">월</span></label>
+              <label><input type="checkbox" class="routine-weekday" value="2" /> <span data-i18n-weekday="2">화</span></label>
+              <label><input type="checkbox" class="routine-weekday" value="3" /> <span data-i18n-weekday="3">수</span></label>
+              <label><input type="checkbox" class="routine-weekday" value="4" /> <span data-i18n-weekday="4">목</span></label>
+              <label><input type="checkbox" class="routine-weekday" value="5" /> <span data-i18n-weekday="5">금</span></label>
+              <label><input type="checkbox" class="routine-weekday" value="6" /> <span data-i18n-weekday="6">토</span></label>
+              <label><input type="checkbox" class="routine-weekday" value="0" /> <span data-i18n-weekday="0">일</span></label>
+            </div>
+            <label><span data-i18n="labelDailyLimit">하루 최대 발행 수 (자동배치 및 실제 발행 한도, 1~20)</span>
+              <input type="number" id="routineDailyLimit" min="1" max="20" value="6" />
+            </label>
+            <button id="btnSaveRoutine" class="secondary" data-i18n="btnSaveRoutine">시간표 저장</button>
+            <div id="routineSaveStatus" class="muted"></div>
+          </div>
+        </div>
+
+        <div class="editor-panel" id="schedMgmtPanelBatch" data-schedmgmt-panel="batch">
+          <div class="card" id="batchScheduleCard">
+            <h3 data-i18n="batchTitle">승인 글 자동배치</h3>
+            <p class="muted" data-i18n="batchDesc">승인(approved) 상태의 글만 선택할 수 있습니다. 선택한 순서(기본: 생성 시각이 오래된 글부터)대로 위 시간표의 빈 슬롯에 배치됩니다.</p>
+            <div class="candidate-toolbar">
+              <button type="button" class="secondary" id="btnSelectAllApproved" data-i18n="btnSelectAll">전체 선택</button>
+              <button type="button" class="secondary" id="btnSelectNoneApproved" data-i18n="btnSelectNone">전체 해제</button>
+            </div>
+            <div id="approvedSelectionCountLabel" class="muted"></div>
+            <div id="approvedSelectionList" class="list"></div>
+            <button id="btnPreviewBatchSchedule" class="big-btn" disabled data-i18n="btnPreviewBatchSchedule">시간표로 자동배치</button>
+          </div>
+
+          <div class="card" id="batchPreviewCard" style="display:none;">
+            <h3 data-i18n="batchPreviewTitle">자동배치 미리보기</h3>
+            <p class="muted" data-i18n="batchPreviewDesc">아직 저장되지 않았습니다. 아래 배치를 확인한 뒤 "예약 확정"을 눌러야 실제로 예약됩니다.</p>
+            <table class="preview-table" id="batchPreviewTable"></table>
+            <div class="actions">
+              <button id="btnConfirmBatchSchedule" class="success" data-i18n="btnConfirmBatchSchedule">예약 확정</button>
+              <button type="button" class="secondary" id="btnCancelBatchPreview" data-i18n="btnCancel">취소</button>
+            </div>
+            <div id="batchScheduleError" class="muted"></div>
+          </div>
+        </div>
+
+        <div class="editor-panel" id="schedMgmtPanelScheduled" data-schedmgmt-panel="scheduled">
+          <div id="scheduleList" class="list"></div>
+        </div>
+
+        <div class="editor-panel" id="schedMgmtPanelPublishlog" data-schedmgmt-panel="publishlog">
+          <p class="muted" data-i18n="publishlogNote">성과(조회수 등) 조회 기능은 v1에서 아직 지원하지 않습니다. (추후 지원 예정)</p>
+          <div id="publishLogList" class="list"></div>
+        </div>
+      </section>
+
+      <section id="view-settings" class="view">
+        <h2 data-i18n="settingsTitle">설정</h2>
+
+        <!-- 자동 발행 ON/OFF 의 canonical 조작 위치. 공장 전체에 적용되는 전역 설정이라
+             예약 관리가 아니라 설정에 둔다. 기존 settings.auto_publish 값과 기존
+             POST /api/status/auto-publish 를 그대로 재사용한다(새 설정/새 API 없음). -->
+        <div class="card" id="autoPublishSettingsCard">
+          <h3 data-i18n="labelAutoPublish">자동 발행</h3>
+          <label>
+            <input type="checkbox" id="autoPublishSettingsToggle" />
+            <span id="autoPublishSettingsState" class="status-badge status-manual"></span>
+          </label>
+          <p class="muted" id="autoPublishSettingsDesc"></p>
+        </div>
+
+        <div class="card">
+          <h3 data-i18n="threadsConnTitle">Threads 계정 연결</h3>
+
+          <!-- P0.5: 연결 상태 카드. 미연결/연결 중/연결됨/불일치/만료 상태를 app.js(renderThreadsConnectionCard)가
+               그린다. 숫자 User ID·토큰·App ID는 일반 화면에 표시하지 않는다. -->
+          <div id="threadsConnectionCard" class="card" data-i18n="loading">불러오는 중...</div>
+
+          <!-- P1: Meta 설정 화면에 그대로 붙여넣어야 하는 리디렉션 콜백 URL.
+             읽기 전용으로만 보여주고 복사 버튼을 제공한다(손으로 옮겨 적다 나는 오타 방지).
+             연결 폼 안이 아니라 바깥에 두는 이유: 연결이 끝나면 폼이 접히는데, Meta 설정을
+             다시 확인하거나 고칠 때도 같은 주소가 필요하기 때문이다.
+             값은 서버가 실제 OAuth에 쓰는 주소를 그대로 내려준 것이며 localStorage 등에 저장하지 않는다. -->
+          <div id="threadsCallbackRow" class="form-col" style="display:none;">
+            <label>
+              <span data-i18n="labelThreadsCallbackUrl">리디렉션 콜백 URL</span>
+              <span class="input-with-toggle">
+                <input type="text" id="threadsCallbackUrlInput" readonly spellcheck="false" />
+                <button type="button" class="secondary" id="btnCopyThreadsCallbackUrl" data-i18n="btnCopyCallbackUrl">복사</button>
+              </span>
+              <span class="muted" data-i18n="threadsCallbackUrlHint">Meta의 리디렉션 콜백 URL 칸에 붙여넣으세요.</span>
+            </label>
+            <p id="threadsCallbackCopyStatus" class="muted" style="display:none;"></p>
+          </div>
+          <!-- BYO(구매자 자기 Meta 앱) 연결 폼. App Secret은 이 요청 1회로만 서버에 전달되고,
+               서버 메모리에서 교환이 끝나는 즉시 폐기된다(프런트도 저장하지 않음). -->
+          <div id="threadsOAuthForm" class="form-col">
+            <p class="muted" data-i18n="threadsOAuthPrepTitle">먼저 준비해 주세요.</p>
+            <ul class="muted threads-prep-list">
+              <li data-i18n="threadsOAuthPrep1">Instagram 계정</li>
+              <li data-i18n="threadsOAuthPrep2">해당 계정으로 사용하는 Threads 계정</li>
+              <li data-i18n="threadsOAuthPrep3">본인 Meta 개발자 앱의 Threads API 설정</li>
+            </ul>
+            <p class="muted" data-i18n="threadsOAuthWhereHint">Threads 앱 ID와 앱 시크릿 코드는 Meta for Developers의 Threads API 설정 화면에서 확인할 수 있습니다.</p>
+            <label>
+              <span data-i18n="labelThreadsAppId">Threads 앱 ID</span>
+              <input type="text" id="threadsAppIdInput" inputmode="numeric" autocomplete="off" spellcheck="false" data-i18n-placeholder="phThreadsAppId" placeholder="숫자로 된 Threads 앱 ID" />
+              <span class="muted" data-i18n="threadsAppIdNote">Meta 앱 ID가 아니라 Threads API 설정 화면의 Threads 앱 ID입니다.</span>
+            </label>
+            <label>
+              <span data-i18n="labelThreadsAppSecret">Threads 앱 시크릿 코드</span>
+              <span class="input-with-toggle">
+                <input type="password" id="threadsAppSecretInput" autocomplete="off" spellcheck="false" data-i18n-placeholder="phThreadsAppSecret" placeholder="Meta에서 복사한 앱 시크릿 코드" />
+                <button type="button" class="secondary" id="btnToggleThreadsAppSecret" data-i18n="btnShowSecret">표시</button>
+              </span>
+              <span class="muted" data-i18n="threadsAppSecretStoreNote">앱 시크릿 코드는 이 PC의 Windows 보안 기능으로 암호화해 저장합니다. 다른 PC나 다른 Windows 사용자 계정에서는 사용할 수 없습니다.</span>
+            </label>
+            <p id="threadsOAuthFormNotice" class="muted" style="display:none;"></p>
+            <label>
+              <span data-i18n="labelThreadsTargetUsername">연결할 Threads 사용자명</span>
+              <span class="input-with-prefix"><span class="input-prefix">@</span><input type="text" id="threadsTargetUsernameInput" autocomplete="off" spellcheck="false" data-i18n-placeholder="phThreadsTargetUsername" placeholder="username" /></span>
+            </label>
+            <button id="btnThreadsOAuthStart" class="big-btn" data-i18n="btnThreadsOAuthStart">Threads 계정 연결하기</button>
+            <p id="threadsOAuthFormError" class="muted"></p>
+          </div>
+
+          <!-- 기존 수동 연결은 삭제하지 않고 고급 설정으로 이동(기본 닫힘). 비상용 fallback. -->
+          <details id="threadsAdvancedDetails" class="threads-advanced">
+            <summary data-i18n="threadsAdvancedTitle">고급 연결 설정</summary>
+            <p class="muted" data-i18n="threadsAdvancedDesc">액세스 토큰을 직접 붙여넣어 연결합니다. 토큰만 입력하면 사용자 ID는 자동으로 확인됩니다.</p>
+            <div id="threadsSettingsBody" class="card" data-i18n="loading">불러오는 중...</div>
+            <div class="form-col">
+              <label>
+                <span data-i18n="labelThreadsToken">액세스 토큰</span>
+                <input type="password" id="threadsTokenInput" autocomplete="off" spellcheck="false" data-i18n-placeholder="phThreadsToken" placeholder="Meta에서 복사한 액세스 토큰을 붙여넣으세요" />
+              </label>
+              <label>
+                <span data-i18n="labelThreadsUserId">Threads 사용자 ID (선택)</span>
+                <input type="text" id="threadsUserIdInput" autocomplete="off" spellcheck="false" data-i18n-placeholder="phThreadsUserId" placeholder="비워 두면 토큰으로 자동 확인합니다" />
+              </label>
+            </div>
+            <button id="btnSaveThreads" class="secondary" data-i18n="btnSaveThreads">저장하고 연결 확인</button>
+            <div id="threadsValidateResult" class="card"></div>
+          </details>
+        </div>
+
+        <div class="card">
+          <h3 data-i18n="claudeStatusTitle">Claude Code 상태</h3>
+          <div id="settingsClaudeStatusBody" class="card" data-i18n="loading">불러오는 중...</div>
+        </div>
+
+        <div class="card">
+          <h3 data-i18n="publishSettingsTitle">발행 설정</h3>
+          <div class="form-col">
+            <label><span data-i18n="labelDailyMaxPublish">하루 최대 발행 수</span>
+              <input type="number" id="dailyMaxPublishInput" min="1" max="20" />
+            </label>
+            <p class="muted" data-i18n="dailyMaxPublishHint">하루에 자동으로 발행할 최대 글 수입니다. 1~20 사이에서 설정할 수 있습니다.</p>
+            <button id="btnSaveDailyMaxPublish" class="secondary" data-i18n="btnSave">저장</button>
+            <p id="dailyMaxPublishStatus" class="muted"></p>
+          </div>
+        </div>
+
+        <!-- P1.8: 구매자 언어의 "내 글 스타일". 저장 필드는 기존 페르소나 구조를 그대로
+             재사용하며(DB schema 변경 없음), 라벨과 도움말만 구매자 기준으로 정리했다.
+             AI 내부 용어(prompt/system prompt/token 등)는 노출하지 않는다. -->
+        <div class="card form-col" id="personaForm">
+          <h3 data-i18n="personaTitle">내 글 스타일</h3>
+          <p class="muted" data-i18n="personaIntro">여기서 정한 스타일은 스마트 에디터 등 모든 글 만들기에 함께 적용됩니다.</p>
+          <label><span data-i18n="labelChannelIdentity">스타일 이름</span>
+            <textarea id="p_channel_identity" data-i18n-placeholder="phChannelIdentity" placeholder="예: AI 도구를 직접 써보고 담백하게 기록하는 채널"></textarea>
+          </label>
+          <label><span data-i18n="labelToneDesc">말투</span>
+            <textarea id="p_tone_description" data-i18n-placeholder="phToneDesc" placeholder="예: 친구에게 설명하듯 담백하고 솔직하게"></textarea>
+          </label>
+          <label><span data-i18n="labelAudience">주요 독자</span>
+            <textarea id="p_audience" data-i18n-placeholder="phAudience" placeholder="예: 생산성 도구에 관심 있는 2030 직장인"></textarea>
+          </label>
+          <label><span data-i18n="labelCommonPhrases">글 특징 (자주 쓰는 표현)</span>
+            <textarea id="p_common_phrases" data-i18n-placeholder="phCommonPhrases" placeholder="예: 직접 써봤는데, 결론부터 말하면"></textarea>
+          </label>
+          <label><span data-i18n="labelBannedPhrases">피하고 싶은 표현</span>
+            <textarea id="p_banned_phrases" data-i18n-placeholder="phBannedPhrases" placeholder="예: 무조건, 100% 확실, 대박"></textarea>
+          </label>
+          <label><span data-i18n="labelLengthPref">글 길이</span><input id="p_length_preference" type="text" data-i18n-placeholder="phLengthPref" placeholder="예: 200~450자" /></label>
+          <label><span data-i18n="labelEmojiLevel">이모지 사용</span><input id="p_emoji_level" type="text" data-i18n-placeholder="phEmojiLevel" placeholder="예: 적음(0~2개)" /></label>
+          <label><input id="p_allow_question_ending" type="checkbox" /> <span data-i18n="labelAllowQuestion">질문으로 끝맺어도 됨</span></label>
+          <label><input id="p_allow_external_links" type="checkbox" /> <span data-i18n="labelAllowExternalLinks">외부 링크 사용 허용</span></label>
+          <div class="actions">
+            <button id="btnSavePersona" data-i18n="btnSavePersona">스타일 저장</button>
+            <button type="button" class="secondary" id="btnResetPersona" data-i18n="btnResetPersona">기본 스타일로 되돌리기</button>
+          </div>
+          <p id="personaSaveStatus" class="muted"></p>
+          <span id="personaVersionLabel" class="muted"></span>
+        </div>
+
+        <div class="card">
+          <h3 data-i18n="feedsTitle">자료 출처 설정 (RSS)</h3>
+          <div class="form-row">
+            <input id="feedNameInput" type="text" data-i18n-placeholder="phFeedName" placeholder="피드 이름" />
+            <input id="feedUrlInput" type="text" data-i18n-placeholder="phFeedUrl" placeholder="RSS URL" />
+            <button id="btnAddFeed" data-i18n="btnAddFeed">추가</button>
+          </div>
+          <p class="muted" id="feedAddStatus"></p>
+          <!-- 기본 자료원(built-in)은 프로그램이 자동 관리하므로 개별 카드/토글/삭제를 노출하지
+               않고 요약만 보여준다. 사용자가 직접 추가한 자료원만 펼쳐서 관리한다. -->
+          <p class="muted" id="builtInFeedSummary"></p>
+          <button type="button" class="secondary" id="btnToggleCustomFeeds" aria-expanded="false" aria-controls="feedsList"></button>
+          <div id="feedsList" class="list" style="display:none;"></div>
+        </div>
+
+        <div class="card">
+          <h3 data-i18n="themeTitle">화면 테마</h3>
+          <p class="muted" data-i18n="themeDesc">기본값은 "자동"이며, 시스템(운영체제) 설정을 따릅니다. 라이트·다크를 직접 선택하면 시스템 설정보다 우선 적용됩니다.</p>
+          <div class="theme-choice-group">
+            <label><input type="radio" name="themeChoice" value="auto" /> <span data-i18n="themeAuto">자동</span></label>
+            <label><input type="radio" name="themeChoice" value="light" /> <span data-i18n="themeLight">라이트</span></label>
+            <label><input type="radio" name="themeChoice" value="dark" /> <span data-i18n="themeDark">다크</span></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 data-i18n="languageTitle">화면 언어</h3>
+          <p class="muted" data-i18n="languageDesc">기본값은 "자동"이며, 브라우저 언어를 따릅니다. 한국어·English를 직접 선택하면 자동 판정보다 우선 적용됩니다.</p>
+          <div class="theme-choice-group">
+            <label><input type="radio" name="languageChoice" value="auto" /> <span data-i18n="languageAuto">자동</span></label>
+            <label><input type="radio" name="languageChoice" value="ko" /> <span data-i18n="languageKo">한국어</span></label>
+            <label><input type="radio" name="languageChoice" value="en" /> <span data-i18n="languageEn">English</span></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 data-i18n="dataMgmtTitle">데이터 관리</h3>
+
+          <div class="card danger-zone">
+            <h4><span data-i18n="factoryResetTitle">공장 전체 초기화</span> <span class="status-badge status-failed" data-i18n="factoryResetBadge">위험</span></h4>
+            <p class="muted" data-i18n="factoryResetDesc">초안·자료·예약·발행 기록·자동배치 시간표·사용자 설정·업로드 미디어 등 이 프로그램이 만든 데이터를 초기 상태로 되돌립니다. 되돌릴 수 없습니다.</p>
+            <button type="button" class="danger" id="btnFactoryReset" data-i18n="btnFactoryReset">공장 전체 초기화</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay" style="display:none;">
+    <div class="modal" id="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle"></h3>
+      <div id="modalBody"></div>
+      <div class="modal-actions" id="modalActions"></div>
+    </div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="productRadar.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
