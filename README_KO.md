@@ -23,8 +23,14 @@
 
 ## Windows 실행 파일(EXE)
 
-소스에서 직접 빌드해 사용할 수 있고, 빌드된 Windows 설치 파일은 배포 시
-**GitHub Releases**에서 제공할 예정입니다. (현재는 준비 중이며 아직 게시된 Release가 없습니다.)
+Community **v1.11.7**을 공개했습니다. Windows 설치 파일을 **GitHub Releases**에서 바로
+받을 수 있습니다.
+
+- [v1.11.7 Release](https://github.com/apache3563-bit/ddalkkak-threads-community/releases/tag/v1.11.7)
+- 설치 파일: `DdalkkakThreadsFactory_Community_Setup_1.11.7.exe`
+
+설치 파일이 가장 간단한 경로입니다. Node.js를 따로 설치하지 않아도 되고, 필요한 실행 환경이
+설치본 안에 함께 들어 있습니다. 소스에서 직접 빌드해 쓰는 방법도 계속 지원합니다(아래 "1. 설치 방법").
 
 ---
 
@@ -44,6 +50,18 @@
 ---
 
 ## 1. 설치 방법
+
+설치 방법은 두 가지입니다. **프로그램을 쓰려는 것이라면 A를 권합니다.**
+
+### A. 설치 파일로 설치 (일반 사용자 · 권장)
+
+1. [v1.11.7 Release](https://github.com/apache3563-bit/ddalkkak-threads-community/releases/tag/v1.11.7)에서 `DdalkkakThreadsFactory_Community_Setup_1.11.7.exe`를 내려받습니다.
+2. 내려받은 파일을 실행해 설치합니다. 관리자 권한이 필요하지 않습니다.
+3. 시작 메뉴나 바탕화면의 바로가기로 실행하면 기본 브라우저가 열립니다.
+
+Node.js 설치, `install.bat`, `start.bat`은 이 경로에서 필요하지 않습니다.
+
+### B. 소스에서 직접 실행 (개발 · 검증용)
 
 1. [Node.js 22 이상](https://nodejs.org)을 설치합니다 (LTS 버전 권장).
    - 의존성 중 `better-sqlite3`가 Node.js 22 이상을 요구합니다.
@@ -94,6 +112,9 @@ claude CLI가 없어도 서버는 켜지지만, 글 생성 버튼을 누르면 �
 ---
 
 ## 3. Meta 개발자 앱 생성 절차
+
+> **처음 연결하는 경우** 화면 그림이 함께 있는 공식 연결설명서를 먼저 참고하세요 —
+> <https://pulse-audio.co.kr/pages/ddalkkak-threads-connect.html>
 
 아래 절차는 2026년 8월 기준 Meta for Developers 공식 문서
 (`developers.facebook.com/docs/threads`)를 근거로 작성했습니다. 블로그나 오래된 영상의
@@ -323,6 +344,8 @@ Instagram/Threads 비밀번호, 쿠키, 세션 정보는 어디에서도 요구�
 
 화면별 사용법 등 상세 설명서는 공식 사이트에서 제공합니다.
 <https://pulse-audio.co.kr/>
+
+- Threads 연결설명서(연결 방식 선택, Relay 설정, 문제 해결) — <https://pulse-audio.co.kr/pages/ddalkkak-threads-connect.html>
 
 ---
 
