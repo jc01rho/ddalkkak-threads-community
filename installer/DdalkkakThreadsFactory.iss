@@ -11,7 +11,7 @@
 
 #define MyAppName "딸깍 Threads 공장 Community"
 #define MyAppNameEn "Ddalkkak Threads Factory"
-#define MyAppVersion "1.11.8"
+#define MyAppVersion "1.11.71"
 #define MyAppPublisher "Pulse Factory"
 #define MyAppExeName "DdalkkakThreadsFactory.exe"
 #define MyStagingDir "..\release\windows-staging"

@@ -1,6 +1,6 @@
 {
   "name": "ddalkkak-threads-factory",
-  "version": "1.11.8",
+  "version": "1.11.71",
   "description": "딸칵 Threads 공장 v1 - 개인용 콘텐츠 제작 및 예약 발행 로컬 웹앱",
   "private": true,
   "main": "dist/server.js",
