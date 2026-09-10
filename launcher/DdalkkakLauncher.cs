@@ -272,16 +272,27 @@ namespace DdalkkakLauncher
             psi.RedirectStandardOutput = true;
             psi.RedirectStandardError = true;
 
-            string claudeDirToPrepend = FindClaudeDirToPrepend();
-            if (claudeDirToPrepend != null)
+            ClaudeLookup claude = FindClaude();
+            if (claude.Kind == "NOT_FOUND")
             {
-                string currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
-                psi.EnvironmentVariables["PATH"] = claudeDirToPrepend + ";" + currentPath;
-                LogLauncher("Claude Code found; prepended to the child process PATH only: " + claudeDirToPrepend);
+                LogLauncher("Claude Code not found via any search step; server will start without it (existing not-connected UI applies).");
             }
             else
             {
-                LogLauncher("Claude Code not found via any search step; server will start without it (existing not-connected UI applies).");
+                // 찾은 실행 파일의 전체 경로를 자식 프로세스에만 CLAUDE_BIN으로 넘깁니다.
+                // PATH prepend에만 의존하면 두 가지가 깨집니다:
+                //   - Claude Desktop 번들 CLI는 버전 폴더 안에 있어 PATH에 올릴 대상이 아님
+                //   - npm 전역 설치본은 claude.cmd라서 PATH에 올려도 Node가 직접 실행할 수 없음
+                // 그래서 경로를 명시적으로 전달하고, PATH prepend는 호환성 차원에서 유지합니다.
+                psi.EnvironmentVariables["CLAUDE_BIN"] = claude.FullPath;
+                if (claude.DirToPrepend != null)
+                {
+                    string currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
+                    psi.EnvironmentVariables["PATH"] = claude.DirToPrepend + ";" + currentPath;
+                }
+                // 개인 사용자 전체 경로는 로그에 남기지 않고 발견 위치 유형과 파일명만 남깁니다.
+                LogLauncher("Claude Code found (" + claude.Kind + "): " + Path.GetFileName(claude.FullPath)
+                    + (claude.DirToPrepend != null ? "; its folder was prepended to the child process PATH only" : "; already reachable, PATH unchanged"));
             }
 
             Process p = new Process();
@@ -299,49 +310,167 @@ namespace DdalkkakLauncher
             if (e.Data != null) AppendServerLog(e.Data);
         }
 
-        // Search order matches the already-verified start-release.bat exactly:
-        //   1) current PATH (claude.exe, then claude)
-        //   2) %USERPROFILE%\.local\bin\claude.exe
-        //   3) %APPDATA%\npm\claude.cmd
-        //   4) %APPDATA%\npm\claude.exe
-        // Returns null when it is already on PATH (nothing to add) or was not
-        // found anywhere. Returns the single folder to prepend when it was only
-        // found via step 2, 3, or 4. Never hardcodes a username or dev machine
-        // path - only %USERPROFILE%/%APPDATA%, which Windows sets per user.
-        private static string FindClaudeDirToPrepend()
+        // Where Claude Code was found, and what (if anything) to do about PATH.
+        // Kind is one of: FOUND_ENV, FOUND_IN_PATH, FOUND_LOCAL_BIN, FOUND_NPM,
+        // FOUND_DESKTOP, NOT_FOUND. DirToPrepend is null when the folder is
+        // already reachable and nothing needs to be added.
+        private sealed class ClaudeLookup
         {
-            if (IsOnCurrentPath("claude.exe") || IsOnCurrentPath("claude"))
+            public string Kind;
+            public string FullPath;
+            public string DirToPrepend;
+        }
+
+        // Search order (start-release.bat performs the same search in the same order):
+        //   0) an explicit CLAUDE_BIN that points at a file that actually exists
+        //   1) current PATH: claude.exe
+        //   2) current PATH: claude, claude.cmd
+        //   3) %USERPROFILE%\.local\bin\claude.exe, then claude
+        //   4) %APPDATA%\npm\claude.cmd, then claude.exe
+        //   5) %APPDATA%\Claude\claude-code\<version>\claude.exe  (Claude Desktop bundle)
+        // Never hardcodes a username or a developer machine path - only the
+        // %USERPROFILE%/%APPDATA% values Windows sets per user. Never guesses a
+        // path that does not exist: every candidate is File.Exists-checked.
+        private static ClaudeLookup FindClaude()
+        {
+            // 0) Respect an explicit CLAUDE_BIN, but only when it really exists.
+            string envBin = Environment.GetEnvironmentVariable("CLAUDE_BIN");
+            if (!string.IsNullOrEmpty(envBin))
             {
-                return null;
+                try
+                {
+                    if (File.Exists(envBin))
+                    {
+                        return new ClaudeLookup { Kind = "FOUND_ENV", FullPath = envBin, DirToPrepend = null };
+                    }
+                }
+                catch
+                {
+                    // A malformed CLAUDE_BIN must not stop the search below.
+                }
             }
 
+            // 1) + 2) already reachable through the current PATH.
+            string[] pathNames = new string[] { "claude.exe", "claude", "claude.cmd" };
+            for (int i = 0; i < pathNames.Length; i++)
+            {
+                string hit = FindOnCurrentPath(pathNames[i]);
+                if (hit != null)
+                {
+                    return new ClaudeLookup { Kind = "FOUND_IN_PATH", FullPath = hit, DirToPrepend = null };
+                }
+            }
+
+            // 3) standalone installer (install.ps1 / install.cmd).
             string userProfile = Environment.GetEnvironmentVariable("USERPROFILE");
             if (!string.IsNullOrEmpty(userProfile))
             {
                 string standaloneDir = Path.Combine(userProfile, ".local", "bin");
-                if (File.Exists(Path.Combine(standaloneDir, "claude.exe")))
+                string hit = FirstExisting(standaloneDir, new string[] { "claude.exe", "claude" });
+                if (hit != null)
                 {
-                    return standaloneDir;
+                    return new ClaudeLookup { Kind = "FOUND_LOCAL_BIN", FullPath = hit, DirToPrepend = standaloneDir };
                 }
             }
 
             string appData = Environment.GetEnvironmentVariable("APPDATA");
+
+            // 4) npm global install.
             if (!string.IsNullOrEmpty(appData))
             {
                 string npmDir = Path.Combine(appData, "npm");
-                if (File.Exists(Path.Combine(npmDir, "claude.cmd")) || File.Exists(Path.Combine(npmDir, "claude.exe")))
+                string hit = FirstExisting(npmDir, new string[] { "claude.cmd", "claude.exe" });
+                if (hit != null)
                 {
-                    return npmDir;
+                    return new ClaudeLookup { Kind = "FOUND_NPM", FullPath = hit, DirToPrepend = npmDir };
                 }
             }
 
+            // 5) Claude Desktop ships its own Claude Code under a per-version
+            //    folder that is not on PATH, so only an explicit path reaches it.
+            if (!string.IsNullOrEmpty(appData))
+            {
+                string desktopExe = FindNewestDesktopClaude(Path.Combine(appData, "Claude", "claude-code"));
+                if (desktopExe != null)
+                {
+                    return new ClaudeLookup { Kind = "FOUND_DESKTOP", FullPath = desktopExe, DirToPrepend = Path.GetDirectoryName(desktopExe) };
+                }
+            }
+
+            return new ClaudeLookup { Kind = "NOT_FOUND", FullPath = null, DirToPrepend = null };
+        }
+
+        // Picks the newest version folder that actually contains claude.exe.
+        // Folder names are normally versions ("2.1.260"); anything that does not
+        // parse as a version still stays a candidate and is ordered by name, so
+        // an unexpected name can never make the whole lookup fail.
+        private static string FindNewestDesktopClaude(string baseDir)
+        {
+            try
+            {
+                if (!Directory.Exists(baseDir)) return null;
+                string[] dirs = Directory.GetDirectories(baseDir);
+                string bestPath = null;
+                Version bestVersion = null;
+                string bestName = null;
+                for (int i = 0; i < dirs.Length; i++)
+                {
+                    string exe = Path.Combine(dirs[i], "claude.exe");
+                    if (!File.Exists(exe)) continue;
+                    string name = Path.GetFileName(dirs[i]);
+                    Version parsed = null;
+                    Version.TryParse(name, out parsed);
+
+                    if (bestPath == null)
+                    {
+                        bestPath = exe; bestVersion = parsed; bestName = name; continue;
+                    }
+                    if (parsed != null && bestVersion != null)
+                    {
+                        if (parsed > bestVersion) { bestPath = exe; bestVersion = parsed; bestName = name; }
+                    }
+                    else if (parsed != null && bestVersion == null)
+                    {
+                        // A real version always beats an unparseable folder name.
+                        bestPath = exe; bestVersion = parsed; bestName = name;
+                    }
+                    else if (parsed == null && bestVersion == null)
+                    {
+                        if (string.Compare(name, bestName, StringComparison.OrdinalIgnoreCase) > 0)
+                        {
+                            bestPath = exe; bestName = name;
+                        }
+                    }
+                }
+                return bestPath;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static string FirstExisting(string dir, string[] fileNames)
+        {
+            for (int i = 0; i < fileNames.Length; i++)
+            {
+                try
+                {
+                    string full = Path.Combine(dir, fileNames[i]);
+                    if (File.Exists(full)) return full;
+                }
+                catch
+                {
+                    // Ignore malformed paths and keep looking.
+                }
+            }
             return null;
         }
 
-        private static bool IsOnCurrentPath(string exeName)
+        private static string FindOnCurrentPath(string exeName)
         {
             string pathVar = Environment.GetEnvironmentVariable("PATH");
-            if (string.IsNullOrEmpty(pathVar)) return false;
+            if (string.IsNullOrEmpty(pathVar)) return null;
             string[] dirs = pathVar.Split(';');
             for (int i = 0; i < dirs.Length; i++)
             {
@@ -349,14 +478,15 @@ namespace DdalkkakLauncher
                 if (dir.Length == 0) continue;
                 try
                 {
-                    if (File.Exists(Path.Combine(dir, exeName))) return true;
+                    string full = Path.Combine(dir, exeName);
+                    if (File.Exists(full)) return full;
                 }
                 catch
                 {
                     // Ignore malformed PATH entries and keep searching.
                 }
             }
-            return false;
+            return null;
         }
 
         // Only ever targets the exact Process handle this launcher itself

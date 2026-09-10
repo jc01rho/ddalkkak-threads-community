@@ -86,14 +86,29 @@ Node.js 설치, `install.bat`, `start.bat`은 이 경로에서 필요하지 않�
 이 프로그램은 별도의 Anthropic API 키를 요구하지 않고, **현재 컴퓨터에 로그인된 Claude Code CLI**를
 그대로 사용합니다. 시작 시 자동으로 `claude --version`을 실행해 설치 여부를 확인합니다.
 
+### 이미 Claude Desktop을 쓰고 있다면
+
+Windows용 Claude Desktop 중 Claude Code를 함께 설치하는 버전은
+`%APPDATA%\Claude\claude-code\<버전>\claude.exe`에 실행 파일을 둡니다. 이 위치는 PATH에
+등록되지 않아 `where claude`로는 찾을 수 없지만, **딸깍이 이 경로를 직접 확인하므로
+Claude Code를 따로 설치하지 않아도 그대로 연결됩니다.**
+
+- 이 경우 아래 설치 절차는 건너뛰고 3번으로 넘어가세요.
+- 다만 **모든 Claude Desktop 버전이 Claude Code를 포함하는 것은 아닙니다.** 위 폴더가 없거나
+  프로그램이 계속 "미연결"로 표시되면 아래 절차로 Claude Code를 설치하세요.
+- 딸깍은 Claude 로그인 정보(비밀번호·API 키·토큰)를 요구하거나 저장하지 않습니다.
+  이미 로그인된 Claude Code를 그대로 호출할 뿐입니다.
+
+### Claude Code를 직접 설치하는 경우
+
 1. `where claude`(cmd) 또는 `Get-Command claude`(PowerShell)로 이미 설치되어 있는지 먼저 확인하세요.
-   "찾지 못했습니다"가 나오면 설치가 안 된 것입니다 (아래 2번으로 진행).
+   "찾지 못했습니다"가 나오면 PATH에 없는 것입니다. 위의 Desktop 경로도 함께 확인해 보세요.
 2. 설치 (Windows, 공식 설치 스크립트 - 관리자 권한 필요 없음):
    - **PowerShell**: `irm https://claude.ai/install.ps1 | iex`
    - **cmd**: `curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del install.cmd`
    - 설치 후 아무 터미널에서나 `claude`를 입력하면 로그인 절차(브라우저 인증)가 시작됩니다.
      Claude Code는 Pro/Max/Team/Enterprise 계정이 필요하며, 무료 claude.ai 플랜으로는 사용할 수 없습니다.
-   - 터미널 사용이 익숙하지 않다면 [Desktop 앱](https://claude.com/download)으로 설치해도 됩니다.
+   - `npm install -g` 로 설치한 경우(`%APPDATA%\npm\claude.cmd`)도 딸깍이 함께 인식합니다.
 3. 설치/로그인 후 새 터미널(cmd)을 열고 아래 명령이 버전을 출력하는지 확인하세요.
    ```
    claude --version

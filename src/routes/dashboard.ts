@@ -17,7 +17,11 @@ import {
 const router = Router();
 
 router.get("/", async (_req, res) => {
-  const claudeStatus = await checkClaudeCli();
+  // 위와 같은 이유로 /api/status가 Claude 탐지 때문에 응답하지 못하는 일은 없어야 한다.
+  const claudeStatus = await checkClaudeCli().catch((e) => ({
+    available: false,
+    error: `claude 확인 중 예외: ${e && e.message ? e.message : String(e)}`,
+  }));
 
   const hasThreadsConfig = !!config.THREADS_ACCESS_TOKEN && !!config.THREADS_USER_ID;
   let threadsStatus: { connected: boolean; username?: string; error?: string; configured: boolean } = {

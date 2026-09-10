@@ -7,7 +7,7 @@ import { config } from "./env";
 import { getDb, seedDefaultFeedsIfEmpty, syncBuiltInFeeds } from "./database";
 import { BUILT_IN_FEEDS } from "./builtInFeeds";
 import { applyStoredThreadsCredentialsToConfig } from "./threadsCredentials";
-import { checkClaudeCli } from "./claude";
+import { ClaudeCliStatus, checkClaudeCli } from "./claude";
 import { reconcileInterruptedPublishing, startScheduler } from "./scheduler";
 import { startThreadsMediaGatewayListener } from "./threadsMediaListener";
 import { sweepOrphanedMedia } from "./mediaUpload";
@@ -69,7 +69,12 @@ export async function startServer(): Promise<import("http").Server> {
   const syncedFeeds = syncBuiltInFeeds(BUILT_IN_FEEDS);
   if (syncedFeeds.added > 0) console.log(`[feeds] 기본 자료원 ${syncedFeeds.added}개를 추가했습니다(기존 설정 유지).`);
 
-  const claudeStatus = await checkClaudeCli();
+  // checkClaudeCli는 어떤 실패도 available:false로 정상 반환하도록 만들어져 있다.
+  // 그래도 Claude 탐지가 서버 기동을 막는 일은 절대 없어야 하므로 경계에서 한 겹만 더 막는다.
+  const claudeStatus: ClaudeCliStatus = await checkClaudeCli().catch((e) => ({
+    available: false,
+    error: `claude 확인 중 예외: ${e && e.message ? e.message : String(e)}`,
+  }));
   if (claudeStatus.available) {
     console.log(`[claude] CLI 감지됨: ${claudeStatus.version}`);
   } else {

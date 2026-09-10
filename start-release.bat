@@ -119,40 +119,78 @@ if errorlevel 1 (
 )
 
 rem ---- 4) Try to locate the Claude Code CLI (optional, never fatal) ----
-rem      Search order:
-rem        1) current PATH (where claude.exe, then where claude)
-rem        2) standalone install: %USERPROFILE%\.local\bin\claude.exe
-rem        3) npm global install: %APPDATA%\npm\claude.cmd or claude.exe
-rem      If it is already on PATH, PATH is left unchanged. If it is only
-rem      found in one of the other two locations, that single folder is
-rem      added to the FRONT of this batch process's own PATH only (not the
-rem      user or machine PATH), so the node.exe started below inherits it.
-rem      If it cannot be found anywhere, the server still starts normally;
-rem      the program screen already shows Claude Code as not connected.
+rem      Search order (DdalkkakLauncher.exe performs the same search in the
+rem      same order, so the two never disagree):
+rem        0) an explicit CLAUDE_BIN that points at a file that exists
+rem        1) current PATH: claude.exe
+rem        2) current PATH: claude, claude.cmd
+rem        3) standalone install: %USERPROFILE%\.local\bin\claude.exe or claude
+rem        4) npm global install: %APPDATA%\npm\claude.cmd or claude.exe
+rem        5) Claude Desktop bundle: %APPDATA%\Claude\claude-code\<version>\claude.exe
+rem      Whenever a concrete file is found, its FULL PATH is exported as
+rem      CLAUDE_BIN so node does not have to resolve the name again - the
+rem      Desktop bundle lives in a per-version folder that is not on PATH, and
+rem      npm's claude.cmd cannot be launched by name at all. The folder is also
+rem      prepended to this batch process's own PATH (never the user or machine
+rem      PATH) for compatibility. If nothing is found the server still starts
+rem      normally; the program screen already shows Claude Code as not connected.
 set "CLAUDE_FOUND=0"
 
-where claude.exe >nul 2>nul
-if not errorlevel 1 set "CLAUDE_FOUND=1"
-
-if "%CLAUDE_FOUND%"=="0" (
-    where claude >nul 2>nul
-    if not errorlevel 1 set "CLAUDE_FOUND=1"
+if defined CLAUDE_BIN (
+    if exist "%CLAUDE_BIN%" set "CLAUDE_FOUND=1"
 )
 
 if "%CLAUDE_FOUND%"=="0" (
-    if exist "%USERPROFILE%\.local\bin\claude.exe" (
-        set "PATH=%USERPROFILE%\.local\bin;%PATH%"
-        set "CLAUDE_FOUND=1"
+    for %%I in (claude.exe claude claude.cmd) do (
+        if "!CLAUDE_FOUND!"=="0" (
+            for /f "delims=" %%P in ('where %%I 2^>nul') do (
+                if "!CLAUDE_FOUND!"=="0" (
+                    set "CLAUDE_BIN=%%P"
+                    set "CLAUDE_FOUND=1"
+                )
+            )
+        )
     )
 )
 
 if "%CLAUDE_FOUND%"=="0" (
-    if exist "%APPDATA%\npm\claude.cmd" (
-        set "PATH=%APPDATA%\npm;%PATH%"
-        set "CLAUDE_FOUND=1"
-    ) else if exist "%APPDATA%\npm\claude.exe" (
-        set "PATH=%APPDATA%\npm;%PATH%"
-        set "CLAUDE_FOUND=1"
+    for %%I in (claude.exe claude) do (
+        if "!CLAUDE_FOUND!"=="0" (
+            if exist "%USERPROFILE%\.local\bin\%%I" (
+                set "CLAUDE_BIN=%USERPROFILE%\.local\bin\%%I"
+                set "PATH=%USERPROFILE%\.local\bin;%PATH%"
+                set "CLAUDE_FOUND=1"
+            )
+        )
+    )
+)
+
+if "%CLAUDE_FOUND%"=="0" (
+    for %%I in (claude.cmd claude.exe) do (
+        if "!CLAUDE_FOUND!"=="0" (
+            if exist "%APPDATA%\npm\%%I" (
+                set "CLAUDE_BIN=%APPDATA%\npm\%%I"
+                set "PATH=%APPDATA%\npm;%PATH%"
+                set "CLAUDE_FOUND=1"
+            )
+        )
+    )
+)
+
+rem      Claude Desktop keeps several version folders side by side. "dir /b /o-n"
+rem      lists them newest-name-first, and the first one that actually contains
+rem      claude.exe wins. No path is ever guessed - each candidate is checked.
+if "%CLAUDE_FOUND%"=="0" (
+    if exist "%APPDATA%\Claude\claude-code" (
+        for /f "delims=" %%V in ('dir /b /ad /o-n "%APPDATA%\Claude\claude-code" 2^>nul') do (
+            if "!CLAUDE_FOUND!"=="0" (
+                if exist "%APPDATA%\Claude\claude-code\%%V\claude.exe" (
+                    set "CLAUDE_BIN=%APPDATA%\Claude\claude-code\%%V\claude.exe"
+                    set "PATH=%APPDATA%\Claude\claude-code\%%V;%PATH%"
+                    set "CLAUDE_FOUND=1"
+                )
+            )
+        )
     )
 )
 

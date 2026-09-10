@@ -3,7 +3,7 @@
 // 중요(보안): 셸 문자열을 직접 조합하지 않고, spawn에 인자를 "배열"로 전달해서 명령어 삽입 위험을 막습니다.
 // Claude에게 파일 수정이나 명령 실행 권한을 주지 않고, 오직 JSON 글 초안만 받습니다.
 
-import { spawn } from "child_process";
+import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { PersonaData } from "./database";
 import { config } from "./env";
 
@@ -11,6 +11,45 @@ export interface ClaudeCliStatus {
   available: boolean;
   version?: string;
   error?: string;
+}
+
+// Windows는 .cmd/.bat을 CreateProcess로 직접 실행할 수 없습니다. Node 18부터는 그 시도를
+// 아예 거부해서 spawn()이 EINVAL을 "동기적으로 throw"합니다(CVE-2024-27980 대응) - 그래서
+// npm 전역 설치본(%APPDATA%\npm\claude.cmd)을 CLAUDE_BIN으로 지정하면 탐지가 실패하는 것을
+// 넘어 서버 기동까지 죽었습니다.
+//
+// 그렇다고 모든 실행에 shell:true를 쓰지는 않습니다(.exe는 기존처럼 직접 실행). .cmd/.bat일
+// 때만 ComSpec을 거치고, 그때도 셸에 문자열을 조립해 넘기지 않습니다 - windowsVerbatimArguments로
+// 아래에서 직접 인용한 커맨드라인만 전달합니다. 이 함수에 들어오는 인자는 모두 이 파일 안의
+// 고정 리터럴이며(프롬프트는 명령행이 아니라 stdin으로 전달), 사용자 입력이 명령행에 닿지
+// 않으므로 명령 주입 경로가 생기지 않습니다.
+function isShellScriptBin(bin: string): boolean {
+  return /\.(cmd|bat)$/i.test(bin.trim());
+}
+
+// cmd.exe /s /c 는 바깥 따옴표 한 쌍만 벗겨내고 나머지를 그대로 씁니다. 각 인자를 따옴표로
+// 감싸고 내부 따옴표만 이스케이프하면 빈 문자열 인자(--tools "")도 그대로 보존됩니다.
+function quoteForCmd(arg: string): string {
+  return '"' + arg.replace(/"/g, '\\"') + '"';
+}
+
+type SpawnedClaude = ChildProcessWithoutNullStreams;
+
+// CLAUDE_BIN 종류에 맞는 방식으로 claude를 띄웁니다. 두 호출부(탐지/실제 생성)가 반드시
+// 같은 실행 경로를 쓰도록 이 함수 하나만 사용합니다.
+function spawnClaude(args: readonly string[]): SpawnedClaude {
+  const bin = config.CLAUDE_BIN;
+  const stdio: ["pipe", "pipe", "pipe"] = ["pipe", "pipe", "pipe"];
+  if (process.platform === "win32" && isShellScriptBin(bin)) {
+    const comspec = process.env.ComSpec || process.env.COMSPEC || "cmd.exe";
+    const line = [bin].concat(args as string[]).map(quoteForCmd).join(" ");
+    return spawn(comspec, ["/d", "/s", "/c", '"' + line + '"'], {
+      shell: false,
+      windowsVerbatimArguments: true,
+      stdio,
+    }) as SpawnedClaude;
+  }
+  return spawn(bin, args as string[], { shell: false, stdio }) as SpawnedClaude;
 }
 
 // claude --version 으로 설치/로그인 여부를 확인합니다.
@@ -21,7 +60,15 @@ export function checkClaudeCli(): Promise<ClaudeCliStatus> {
   }
   return new Promise((resolve) => {
     let settled = false;
-    const proc = spawn(config.CLAUDE_BIN, ["--version"], { shell: false, stdio: ["pipe", "pipe", "pipe"] });
+    let proc: SpawnedClaude;
+    // spawn 자체가 동기적으로 throw하는 경우(EINVAL/EACCES 등)까지 여기서 흡수합니다.
+    // Claude를 못 띄우는 것은 "미연결"일 뿐이며, 서버가 죽을 이유가 아닙니다.
+    try {
+      proc = spawnClaude(["--version"]);
+    } catch (e: any) {
+      resolve({ available: false, error: `claude를 실행할 수 없습니다: ${e && e.message ? e.message : String(e)}` });
+      return;
+    }
     let out = "";
     let err = "";
 
@@ -303,7 +350,14 @@ export function runClaudeRawPrompt(prompt: string): Promise<ClaudeRawPromptResul
     let settled = false;
     let timer: ReturnType<typeof setTimeout>;
 
-    const proc = spawn(config.CLAUDE_BIN, args, { shell: false, stdio: ["pipe", "pipe", "pipe"] });
+    // 탐지(checkClaudeCli)와 반드시 같은 실행 경로를 씁니다 - .cmd/.bat도 여기서 함께 처리됩니다.
+    let proc: SpawnedClaude;
+    try {
+      proc = spawnClaude(args);
+    } catch (e: any) {
+      resolve({ success: false, error: `claude를 실행할 수 없습니다: ${e && e.message ? e.message : String(e)}` });
+      return;
+    }
     let out = "";
     let err = "";
     let stdinError: Error | null = null;
