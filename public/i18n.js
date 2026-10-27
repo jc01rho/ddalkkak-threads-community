@@ -331,7 +331,7 @@ const I18N = {
     threadsOAuthInputRequired: "Threads 앱 ID, 앱 시크릿 코드, 사용자명을 모두 입력해 주세요.",
     threadsOAuthAppIdInvalid: "Threads 앱 ID는 숫자여야 합니다.",
     // ---- P0.5B App Secret 안전 저장(Windows DPAPI) ----
-    threadsAppSecretStoreNote: "앱 시크릿 코드는 이 PC의 Windows 보안 기능으로 암호화해 저장합니다. 다른 PC나 다른 Windows 사용자 계정에서는 사용할 수 없습니다.",
+    threadsAppSecretStoreNote: "앱 시크릿 코드는 이 PC에만 저장합니다. Windows에서는 Windows 보안 기능으로 암호화해 다른 PC나 다른 사용자 계정에서 쓸 수 없고, Linux·macOS에서는 암호화 없이 본인만 읽을 수 있는 파일로 저장합니다.",
     threadsAppSecretStored: "● 앱 연결 정보 안전하게 저장됨",
     btnThreadsConnectOther: "다른 계정 연결",
     threadsReconnectSecretUnavailable: "저장된 앱 연결 정보를 사용할 수 없습니다. Threads 앱 시크릿 코드를 다시 입력해 주세요.",
@@ -971,7 +971,7 @@ const I18N = {
     threadsOAuthInputRequired: "Please enter the Threads App ID, App Secret, and username.",
     threadsOAuthAppIdInvalid: "The Threads App ID must be numeric.",
     // ---- P0.5B App Secret secure storage (Windows DPAPI) ----
-    threadsAppSecretStoreNote: "The App Secret is encrypted with this PC's Windows security feature and stored locally. It cannot be used on another PC or under another Windows user account.",
+    threadsAppSecretStoreNote: "The App Secret is stored only on this PC. On Windows it is encrypted with Windows security and cannot be used on another PC or user account; on Linux/macOS it is stored unencrypted in a file only you can read.",
     threadsAppSecretStored: "● App connection info stored securely",
     btnThreadsConnectOther: "Connect a different account",
     threadsReconnectSecretUnavailable: "The saved app connection info cannot be used. Please enter the Threads App Secret again.",

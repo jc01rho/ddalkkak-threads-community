@@ -276,7 +276,7 @@ export async function generateProductRadarMotionBatch(
 
     const encodeResult =
       outputType === "video"
-        ? await encodeMotionVideo({ pngPaths: sourceAbsolutePaths, outPath: tempPath, preset, totalDurationSeconds: totalDuration, width, height, fps }, testOverrides)
+        ? await encodeMotionVideo({ pngPaths: sourceAbsolutePaths, outPath: tempPath, preset, totalDurationSeconds: totalDuration, width, height, fps, encoder: preflight.encoder }, testOverrides)
         : await encodeMotionGif({ pngPaths: sourceAbsolutePaths, outPath: tempPath, preset, totalDurationSeconds: totalDuration, width, height, fps }, testOverrides);
     if (!encodeResult.ok) {
       try {

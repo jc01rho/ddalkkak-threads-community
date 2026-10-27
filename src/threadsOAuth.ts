@@ -541,8 +541,9 @@ export async function tickThreadsOAuth(deps: ThreadsOAuthDeps = {}): Promise<OAu
     }
 
     // 모든 검증 통과 - P0.5B: App Secret을 DPAPI(CurrentUser)로 보호한 뒤 단 한 번 저장 + 런타임 반영.
-    // 보호에 실패해도(DPAPI 불가 환경 등) 연결 자체는 성공이므로 blob 없이 저장한다 → 다음 재연결 때
-    // secret을 다시 입력받는 fallback으로 자연스럽게 이어진다. 평문 secret은 어떤 경우에도 저장하지 않는다.
+    // Windows가 아닌 OS에서는 암호화 없이 저장한다(windowsDpapi.ts "plain:" 형식, 파일 권한 0600).
+    // 보호에 실패해도(Windows에서 PowerShell/DPAPI 오류 등) 연결 자체는 성공이므로 blob 없이 저장한다 →
+    // 다음 재연결 때 secret을 다시 입력받는 fallback으로 자연스럽게 이어진다.
     let appSecretProtected: string | undefined;
     try {
       appSecretProtected = s.appSecret ? await protectSecret(s.appSecret, deps.dpapi) : undefined;
