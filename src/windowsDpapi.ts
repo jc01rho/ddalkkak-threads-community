@@ -13,6 +13,9 @@
 // CurrentUser scope: 같은 Windows 사용자 계정에서만 복호화되고, 파일을 다른 PC/다른 계정으로 옮기면
 // 복호화에 실패합니다. 딸깍은 1PC 라이선스 Windows 전용 제품이라 이것이 기본 정책입니다.
 // LocalMachine scope는 쓰지 않습니다.
+//
+// Windows가 아닌 OS(Linux/macOS): DPAPI가 없으므로 암호화하지 않고 "plain:" + base64로 저장합니다.
+// 보호는 자격증명 파일 권한(0600, threadsCredentials.ts)에 맡깁니다. 이 형식은 어느 OS에서나 복원됩니다.
 
 import { spawn, SpawnOptions } from "child_process";
 
@@ -47,6 +50,7 @@ const UNPROTECT_SCRIPT = [
   "[Console]::Out.Write([Convert]::ToBase64String($out))",
 ].join("; ");
 
+const PLAIN_PREFIX = "plain:";
 const DPAPI_TIMEOUT_MS = 15000;
 const MAX_SECRET_BYTES = 8 * 1024; // App Secret은 수십 바이트 - 비정상 입력 차단
 
@@ -117,6 +121,7 @@ export async function protectSecret(plainText: string, deps: DpapiDeps = {}): Pr
   if (typeof plainText !== "string" || plainText.length === 0) throw new DpapiError("DPAPI_INVALID_INPUT");
   const bytes = Buffer.from(plainText, "utf8");
   if (bytes.length > MAX_SECRET_BYTES) throw new DpapiError("DPAPI_INVALID_INPUT");
+  if ((deps.platform ?? process.platform) !== "win32") return PLAIN_PREFIX + bytes.toString("base64");
   const protectedB64 = await runPowerShellStdinToStdout(PROTECT_SCRIPT, bytes.toString("base64"), deps, "DPAPI_PROTECT_FAILED");
   // 암호문이 평문과 같은 값이면 보호되지 않은 것 - 방어적으로 거부
   if (protectedB64 === bytes.toString("base64")) throw new DpapiError("DPAPI_PROTECT_FAILED");
@@ -126,6 +131,11 @@ export async function protectSecret(plainText: string, deps: DpapiDeps = {}): Pr
 // DPAPI 암호문(base64) → 평문. 다른 사용자/다른 PC/손상 blob은 DPAPI_UNPROTECT_FAILED.
 export async function unprotectSecret(protectedBlob: string, deps: DpapiDeps = {}): Promise<string> {
   if (typeof protectedBlob !== "string" || protectedBlob.trim().length === 0) throw new DpapiError("DPAPI_INVALID_INPUT");
+  if (protectedBlob.startsWith(PLAIN_PREFIX)) {
+    const plain = Buffer.from(protectedBlob.slice(PLAIN_PREFIX.length).trim(), "base64").toString("utf8");
+    if (!plain) throw new DpapiError("DPAPI_UNPROTECT_FAILED");
+    return plain;
+  }
   if (!/^[A-Za-z0-9+/=\s]+$/.test(protectedBlob)) throw new DpapiError("DPAPI_INVALID_INPUT");
   const plainB64 = await runPowerShellStdinToStdout(UNPROTECT_SCRIPT, protectedBlob.trim(), deps, "DPAPI_UNPROTECT_FAILED");
   try {

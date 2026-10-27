@@ -7,10 +7,17 @@
 // 삽입되지 않는다 - 실제로 spawn에 전달되는 모든 경로는 서버가 UUID로 새로 생성한 파일명
 // (resolveMediaPath 검증 통과)뿐이고, 필터 표현식은 motionPresets.ts가 숫자 상수로만 조립한다.
 //
-// FFmpeg 바이너리는 third-party\ffmpeg\(env.ts FFMPEG_EXE_CANDIDATES)에서만 찾는다 - PATH
-// 전역 탐색을 하지 않는다(요청서 8절, browserLaunch.ts의 고정 후보 경로 원칙과 동일).
+// FFmpeg 바이너리는 Windows에서는 third-party\ffmpeg\(env.ts FFMPEG_EXE_CANDIDATES)에서만 찾는다 -
+// PATH 전역 탐색을 하지 않는다(요청서 8절, browserLaunch.ts의 고정 후보 경로 원칙과 동일).
+// Windows가 아닌 OS(Linux/macOS)에는 번들 ffmpeg.exe가 없으므로 고정 후보가 없을 때만 PATH의
+// ffmpeg/ffprobe(패키지 관리자로 설치한 것)를 쓴다.
+//
+// 인코더: Windows 번들(LGPL)은 h264_mf(Media Foundation)만 있고, Linux/macOS 배포판 ffmpeg에는
+// h264_mf가 없다. preflight가 H264_ENCODER_PREFERENCE 순서로 실제 사용 가능한 인코더를 골라
+// 돌려주고, 인코딩은 그 인코더로 한다. 출력 계약(h264 mp4, yuv420p, 무음)은 인코더와 무관하게 같다.
 
 import fs from "fs";
+import path from "path";
 import { execFile } from "child_process";
 import { config } from "../env";
 import { ProductRadarMotionPreset, buildClipFilterChain } from "./motionPresets";
@@ -25,13 +32,29 @@ function firstExisting(paths: readonly string[]): string | null {
   return null;
 }
 
+// Windows가 아닌 OS 전용: PATH에서 실행 가능한 파일을 찾는다(Windows에서는 호출하지 않는다).
+function findOnPath(name: string): string | null {
+  if (process.platform === "win32") return null;
+  for (const dir of (process.env.PATH || "").split(path.delimiter)) {
+    if (!dir) continue;
+    const candidate = path.join(dir, name);
+    try {
+      fs.accessSync(candidate, fs.constants.X_OK);
+      if (fs.statSync(candidate).isFile()) return candidate;
+    } catch {
+      /* 다음 후보 */
+    }
+  }
+  return null;
+}
+
 export function resolveFfmpegExePath(): string | null {
   if (config.FFMPEG_EXE_PATH_OVERRIDE && fs.existsSync(config.FFMPEG_EXE_PATH_OVERRIDE)) return config.FFMPEG_EXE_PATH_OVERRIDE;
-  return firstExisting(config.FFMPEG_EXE_CANDIDATES);
+  return firstExisting(config.FFMPEG_EXE_CANDIDATES) ?? findOnPath("ffmpeg");
 }
 export function resolveFfprobeExePath(): string | null {
   if (config.FFPROBE_EXE_PATH_OVERRIDE && fs.existsSync(config.FFPROBE_EXE_PATH_OVERRIDE)) return config.FFPROBE_EXE_PATH_OVERRIDE;
-  return firstExisting(config.FFPROBE_EXE_CANDIDATES);
+  return firstExisting(config.FFPROBE_EXE_CANDIDATES) ?? findOnPath("ffprobe");
 }
 
 interface ExecResult {
@@ -63,25 +86,48 @@ export interface FfmpegTestOverrides {
 }
 
 // ---- preflight(요청서 6절) - 프로세스 생애주기 동안 1회만 확인하면 충분하다(바이너리/OS
-// 환경은 서버 실행 중 바뀌지 않는다). encoder=h264_mf 도움말 조회는 실제 인코딩을 전혀
+// 환경은 서버 실행 중 바뀌지 않는다). encoder=<name> 도움말 조회는 실제 인코딩을 전혀
 // 하지 않는 read-only 확인이다. ----
 export type FfmpegPreflightFailure = "ffmpeg_missing" | "encoder_missing";
-let cachedPreflightOk: boolean | null = null;
+export type H264Encoder = "h264_mf" | "libx264" | "libopenh264";
+export const H264_ENCODER_PREFERENCE: readonly H264Encoder[] = ["h264_mf", "libx264", "libopenh264"];
+// undefined = 아직 확인 안 함, null = 사용할 수 있는 인코더 없음
+let cachedEncoder: H264Encoder | null | undefined;
 
-export async function preflightFfmpegEncoder(testOverrides?: FfmpegTestOverrides): Promise<{ ok: true } | { ok: false; reason: FfmpegPreflightFailure }> {
-  if (!testOverrides && cachedPreflightOk !== null) {
-    return cachedPreflightOk ? { ok: true } : { ok: false, reason: "encoder_missing" };
+export async function preflightFfmpegEncoder(
+  testOverrides?: FfmpegTestOverrides
+): Promise<{ ok: true; encoder: H264Encoder } | { ok: false; reason: FfmpegPreflightFailure }> {
+  if (!testOverrides && cachedEncoder !== undefined) {
+    return cachedEncoder ? { ok: true, encoder: cachedEncoder } : { ok: false, reason: "encoder_missing" };
   }
   const executor = testOverrides?.executor ?? realExecutor;
   const ffmpegPath = testOverrides?.ffmpegPath ?? resolveFfmpegExePath();
   if (!ffmpegPath) {
-    if (!testOverrides) cachedPreflightOk = false;
+    if (!testOverrides) cachedEncoder = null;
     return { ok: false, reason: "ffmpeg_missing" };
   }
-  const result = await executor(ffmpegPath, ["-hide_banner", "-h", "encoder=h264_mf"], PROBE_TIMEOUT_MS);
-  const ok = result.ok && result.stdout.includes("Encoder h264_mf");
-  if (!testOverrides) cachedPreflightOk = ok;
-  return ok ? { ok: true } : { ok: false, reason: "encoder_missing" };
+  let found: H264Encoder | null = null;
+  for (const encoder of H264_ENCODER_PREFERENCE) {
+    const result = await executor(ffmpegPath, ["-hide_banner", "-h", `encoder=${encoder}`], PROBE_TIMEOUT_MS);
+    if (result.ok && result.stdout.includes(`Encoder ${encoder} `)) {
+      found = encoder;
+      break;
+    }
+  }
+  if (!testOverrides) cachedEncoder = found;
+  return found ? { ok: true, encoder: found } : { ok: false, reason: "encoder_missing" };
+}
+
+// 인코더별 품질 인자 - 출력 형식 인자(-pix_fmt/-an/-movflags/-f)는 공통이라 여기 넣지 않는다.
+function encoderQualityArgs(encoder: H264Encoder): string[] {
+  switch (encoder) {
+    case "h264_mf":
+      return ["-rate_control", "quality", "-quality", "80"];
+    case "libx264":
+      return ["-preset", "medium", "-crf", "20"];
+    case "libopenh264":
+      return ["-b:v", "6M"];
+  }
 }
 
 // ==================================================================================
@@ -96,6 +142,7 @@ export interface EncodeVideoInput {
   width: number;
   height: number;
   fps: number;
+  encoder?: H264Encoder; // preflightFfmpegEncoder()가 고른 값. 생략하면 h264_mf(기존 Windows 동작)
 }
 
 function buildFilterComplex(pngCount: number, preset: ProductRadarMotionPreset, width: number, height: number, fps: number, perClipFrames: number): string {
@@ -131,11 +178,8 @@ export async function encodeMotionVideo(input: EncodeVideoInput, testOverrides?:
     "-r",
     String(input.fps),
     "-c:v",
-    "h264_mf",
-    "-rate_control",
-    "quality",
-    "-quality",
-    "80",
+    input.encoder ?? "h264_mf",
+    ...encoderQualityArgs(input.encoder ?? "h264_mf"),
     "-pix_fmt",
     "yuv420p",
     "-an",

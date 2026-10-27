@@ -76,6 +76,13 @@ Node.js 설치, `install.bat`, `start.bat`은 이 경로에서 필요하지 않�
 3. 설치가 끝나면 `start.bat`을 실행합니다. 서버가 켜지고,
    브라우저에서 `http://localhost:3970` 로 접속하면 됩니다.
 
+### C. Linux · macOS에서 실행
+
+소스 실행(B)과 같은 방법으로 `npm ci && npm run build && npm start`로 띄웁니다.
+- 상품 레이더의 짧은 영상·GIF 만들기를 쓰려면 시스템에 `ffmpeg`가 있어야 합니다(예: `sudo apt install ffmpeg`).
+  Windows 번들의 h264_mf 대신 libx264(없으면 libopenh264)로 인코딩합니다.
+- Threads 앱 시크릿은 암호화 없이 본인만 읽을 수 있는 파일(권한 600)로 저장되어, 재연결 때 다시 입력하지 않아도 됩니다.
+
 > `npm ci`가 실패하면: 인터넷 연결, Node.js 버전(`node --version`이 v22 이상인지)을 확인하세요.
 > `better-sqlite3` 설치 중 오류가 나면 8번 "오류 해결법"을 참고하세요.
 

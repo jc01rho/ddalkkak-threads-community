@@ -127,7 +127,8 @@ export function writeThreadsCredentials(accessToken: string, userId: string, ext
   if (extras.appId) payload.appId = extras.appId;
   if (extras.source) payload.source = extras.source;
   if (extras.appSecretProtected) payload.appSecretProtected = extras.appSecretProtected;
-  fs.writeFileSync(tmp, JSON.stringify(payload, null, 0), "utf-8");
+  // 토큰과(Windows 외 OS에서는 암호화되지 않은) 앱 시크릿이 들어 있으므로 본인만 읽게 한다.
+  fs.writeFileSync(tmp, JSON.stringify(payload, null, 0), { encoding: "utf-8", mode: 0o600 });
   fs.renameSync(tmp, file);
 }
 
